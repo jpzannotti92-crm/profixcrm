@@ -39,9 +39,11 @@ Options -Indexes
 
 RewriteEngine On
 
-# No reescribir llamadas a API dentro de /public/api
+# Reescritura de rutas API amigables hacia /api/index.php
 RewriteCond %{REQUEST_URI} ^/api/ [NC]
-RewriteRule .* - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ /api/index.php [QSA,L]
 
 # Fallback SPA: si no es archivo ni directorio, servir index.html
 RewriteCond %{REQUEST_FILENAME} !-f
