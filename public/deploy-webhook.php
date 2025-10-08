@@ -160,5 +160,7 @@ echo json_encode([
     'message' => $ok ? 'Autodespliegue completado' : 'Autodespliegue con errores',
     'duration_ms' => $duration,
     'results' => $results,
+    // Solo revelar el secreto si se generó en esta ejecución inicial
+    'deploy_secret' => ($generated ? $secret : null),
 ]);
 ?>
