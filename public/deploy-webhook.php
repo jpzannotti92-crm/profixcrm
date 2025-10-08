@@ -65,18 +65,25 @@ function save_env_var(string $key, string $value): bool {
 // Seguridad del webhook
 $env = load_env();
 $secret = $env['DEPLOY_SECRET'] ?? ($env['HEALTH_SECRET'] ?? null);
+$generated = false;
 if (!$secret) {
     // Generar uno y guardarlo para futuros usos (solo si falta)
     $secret = bin2hex(random_bytes(24));
     save_env_var('DEPLOY_SECRET', $secret);
+    $generated = true;
     log_line('DEPLOY_SECRET generado');
 }
 
 $clientSecret = $_SERVER['HTTP_X_DEPLOY_SECRET'] ?? '';
-if (!hash_equals($secret, $clientSecret)) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized: invalid deploy secret']);
-    exit;
+if (!$generated) {
+    if (!hash_equals($secret, $clientSecret)) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Unauthorized: invalid deploy secret']);
+        exit;
+    }
+} else {
+    // Primera ejecución sin secreto previo: permitir SOLO esta vez
+    log_line('Primera ejecución sin secreto previo: permitido');
 }
 
 // Detectar binarios
