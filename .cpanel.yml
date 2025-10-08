@@ -9,3 +9,7 @@ deployment:
     - if [ -d "$HOME/public_html/frontend/dist" ]; then cp -f "$HOME/public_html/frontend/dist/index.html" "$HOME/public_html/index.html"; fi
     - /bin/mkdir -p $HOME/public_html/assets
     - if [ -d "$HOME/public_html/frontend/dist/assets" ]; then cp -f "$HOME/public_html/frontend/dist/assets"/* "$HOME/public_html/assets/"; fi
+    # Copia redundante dentro de /public para compatibilidad con reescrituras
+    - if [ -d "$HOME/public_html/frontend/dist" ]; then cp -f "$HOME/public_html/frontend/dist/index.html" "$HOME/public_html/public/index.html"; fi
+    - /bin/mkdir -p $HOME/public_html/public/assets
+    - if [ -d "$HOME/public_html/frontend/dist/assets" ]; then cp -f "$HOME/public_html/frontend/dist/assets"/* "$HOME/public_html/public/assets/"; fi
