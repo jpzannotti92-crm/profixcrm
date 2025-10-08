@@ -16,3 +16,7 @@ backups/
 *.log
 *.csv
 test_*
+# Ignorar archivos generados en docroot por despliegue cPanel
+/index.html
+/assets/
+/.htaccess
