@@ -53,6 +53,25 @@ jobs:
           if [ -f frontend/dist/index.html ]; then cp -f frontend/dist/index.html public/index.html; fi
           if [ -d frontend/dist/assets ]; then rsync -av --delete frontend/dist/assets/ public/assets/; fi
 
+      - name: Create required writable directories
+        run: |
+          # Crear directorios necesarios para health-deep
+          mkdir -p storage storage/logs uploads
+          # Añadir archivos vacíos para asegurar su subida por FTP
+          touch storage/.keep storage/logs/.keep uploads/.keep
+
+      - name: Verify FTP connection and target directory
+        run: |
+          set -e
+          sudo apt-get update -y
+          sudo apt-get install -y lftp
+          lftp -e "set net:timeout 20; set net:max-retries 2; set ssl:verify-certificate no; pwd; ls; cd ${FTP_DIR}; pwd; ls; bye" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER"
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.FTP_DIR }}
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -63,7 +82,7 @@ jobs:
           protocol: ${{ secrets.FTP_PROTOCOL }}
           local-dir: ./
           server-dir: ${{ secrets.FTP_DIR }}
-          dangerous-clean-slate: true
+          dangerous-clean-slate: false
           exclude: |
             **/.git/**
             **/.github/**
