@@ -114,7 +114,7 @@ PHP
           set -e
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -e "set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; open ${FTP_PROTOCOL}://${FTP_SERVER}:${FTP_PORT}; pwd; ls; cd ${FTP_DIR}; pwd; ls; cd /home/spin2pay/public_html; pwd; ls; bye" -u "$FTP_USERNAME","$FTP_PASSWORD"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; pwd; ls; cd ${FTP_DIR}; pwd; ls; cd /home/spin2pay/public_html; pwd; ls; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -127,7 +127,7 @@ PHP
           echo "FTP_OK $(date -u)" > ftp_check_marker.html
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; open ${FTP_PROTOCOL}://${FTP_SERVER}:${FTP_PORT}; cd ${FTP_DIR}; put -O . ftp_check_marker.html; cd /home/spin2pay/public_html; put -O . ftp_check_marker.html; ls -la; bye" -u "$FTP_USERNAME","$FTP_PASSWORD"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; cd ${FTP_DIR}; put -O . ftp_check_marker.html; cd /home/spin2pay/public_html; put -O . ftp_check_marker.html; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
