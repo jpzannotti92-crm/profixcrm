@@ -10,6 +10,4 @@ deployment:
     - /bin/mkdir -p $HOME/public_html/assets
     - if [ -d "$HOME/public_html/public/assets" ]; then cp -f "$HOME/public_html/public/assets"/* "$HOME/public_html/assets/"; fi
     # (Opcional) Si existe build de dist, copiar también a /public y docroot
-    - if [ -f "$HOME/public_html/frontend/dist/index.html" ]; then cp -f "$HOME/public_html/frontend/dist/index.html" "$HOME/public_html/public/index.html"; fi
-    - /bin/mkdir -p $HOME/public_html/public/assets
-    - if [ -d "$HOME/public_html/frontend/dist/assets" ]; then cp -f "$HOME/public_html/frontend/dist/assets"/* "$HOME/public_html/public/assets/"; fi
+    # (Removido) Evitar copiar dist dentro de /public (ensucia el repo si el working copy está en docroot)
