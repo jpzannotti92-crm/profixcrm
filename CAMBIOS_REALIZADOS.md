@@ -67,3 +67,8 @@ Total de leads creados en las pruebas: **4 leads**
 
 ## Estado del Sistema
 ✅ **FUNCIONAL** - El usuario leadagent puede crear leads sin problemas.
+
+---
+
+### 2025-10-08
+- Trigger inicial para validar auto‑deploy vía GitHub Actions.
