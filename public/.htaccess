@@ -40,6 +40,7 @@ Options -Indexes
 RewriteEngine On
 
 # Reescritura de rutas API amigables a archivos PHP dentro de /public/api
+RewriteRule ^api/health-deep/?$ api/health.php [QSA,L]
 RewriteCond %{REQUEST_URI} ^/api/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
