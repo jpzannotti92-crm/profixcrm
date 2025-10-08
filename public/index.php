@@ -86,6 +86,21 @@ if ($requestUri === '/api/health' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// API Health Deep
+if ($requestUri === '/api/health-deep' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Content-Type: application/json');
+    if (file_exists(__DIR__ . '/api/health-deep.php')) {
+        include __DIR__ . '/api/health-deep.php';
+    } else {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Health-deep endpoint no disponible'
+        ]);
+    }
+    exit;
+}
+
 // API de autenticación
 if (($requestUri === '/api/auth/login' || $requestUri === '/api/auth/login.php') && $_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');

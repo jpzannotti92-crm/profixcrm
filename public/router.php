@@ -146,6 +146,7 @@ if (preg_match('#^/api/#', $uri)) {
     $friendlyApiMap = [
         '/api/config' => '/api/config.php',
         '/api/health' => '/api/health.php',
+        '/api/health-deep' => '/api/health-deep.php',
         '/api/dashboard' => '/api/dashboard.php',
         '/api/leads' => '/api/leads.php',
         '/api/users' => '/api/users.php',
