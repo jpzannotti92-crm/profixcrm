@@ -37,8 +37,16 @@ Options -Indexes
     php_value max_execution_time 300
 </IfModule>
 
-# Reescritura deshabilitada para evitar conflictos.
-# El routing lo manejan index.php y archivos puente en /api.
+RewriteEngine On
+
+# No reescribir llamadas a API dentro de /public/api
+RewriteCond %{REQUEST_URI} ^/api/ [NC]
+RewriteRule .* - [L]
+
+# Fallback SPA: si no es archivo ni directorio, servir index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
 
 # Compresión
 <IfModule mod_deflate.c>
