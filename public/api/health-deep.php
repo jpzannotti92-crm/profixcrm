@@ -243,6 +243,24 @@ $status = [
     'issues' => $issues
 ];
 
+// Añadir snapshot de ENV/constantes para diagnóstico
+try {
+    $status['debug_env'] = [
+        'DB_HOST' => getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? (defined('DB_HOST') ? DB_HOST : null)),
+        'DB_PORT' => getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? (defined('DB_PORT') ? DB_PORT : null)),
+        'DB_DATABASE' => (getenv('DB_DATABASE') ?: ($_ENV['DB_DATABASE'] ?? null)) ?: (getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? (defined('DB_NAME') ? DB_NAME : null))),
+        'DB_USERNAME' => getenv('DB_USERNAME') ?: ($_ENV['DB_USERNAME'] ?? (defined('DB_USER') ? DB_USER : null)),
+        'DB_PASSWORD_present' => (getenv('DB_PASSWORD') !== false) || isset($_ENV['DB_PASSWORD']) || (defined('DB_PASS') && DB_PASS !== ''),
+        'constants_defined' => [
+            'DB_HOST' => defined('DB_HOST'),
+            'DB_PORT' => defined('DB_PORT'),
+            'DB_NAME' => defined('DB_NAME'),
+            'DB_USER' => defined('DB_USER'),
+            'DB_PASS' => defined('DB_PASS')
+        ]
+    ];
+} catch (Throwable $e) {}
+
 // Log a storage/logs/health.log si es posible
 try {
     if (is_dir($logs) && is_writable($logs)) {
