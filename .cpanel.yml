@@ -5,11 +5,11 @@ deployment:
     - /bin/chmod -R 775 $HOME/public_html/storage $HOME/public_html/storage/logs $HOME/public_html/uploads
     - if [ -x /usr/local/bin/composer ]; then cd $HOME/public_html && /usr/local/bin/composer install --no-dev --prefer-dist; fi
     - if [ -f "$HOME/public_html/.htaccess.production" ]; then cp "$HOME/public_html/.htaccess.production" "$HOME/public_html/.htaccess"; fi
-    # Publicar build del frontend en el docroot (index y assets)
-    - if [ -d "$HOME/public_html/frontend/dist" ]; then cp -f "$HOME/public_html/frontend/dist/index.html" "$HOME/public_html/index.html"; fi
+    # Publicar frontend desde /public (index y assets) en docroot
+    - if [ -f "$HOME/public_html/public/index.html" ]; then cp -f "$HOME/public_html/public/index.html" "$HOME/public_html/index.html"; fi
     - /bin/mkdir -p $HOME/public_html/assets
-    - if [ -d "$HOME/public_html/frontend/dist/assets" ]; then cp -f "$HOME/public_html/frontend/dist/assets"/* "$HOME/public_html/assets/"; fi
-    # Copia redundante dentro de /public para compatibilidad con reescrituras
-    - if [ -d "$HOME/public_html/frontend/dist" ]; then cp -f "$HOME/public_html/frontend/dist/index.html" "$HOME/public_html/public/index.html"; fi
+    - if [ -d "$HOME/public_html/public/assets" ]; then cp -f "$HOME/public_html/public/assets"/* "$HOME/public_html/assets/"; fi
+    # (Opcional) Si existe build de dist, copiar también a /public y docroot
+    - if [ -f "$HOME/public_html/frontend/dist/index.html" ]; then cp -f "$HOME/public_html/frontend/dist/index.html" "$HOME/public_html/public/index.html"; fi
     - /bin/mkdir -p $HOME/public_html/public/assets
     - if [ -d "$HOME/public_html/frontend/dist/assets" ]; then cp -f "$HOME/public_html/frontend/dist/assets"/* "$HOME/public_html/public/assets/"; fi
