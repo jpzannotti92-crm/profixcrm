@@ -15,25 +15,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $startTs = microtime(true);
 
-// Cargar entorno de forma robusta
+// Cargar entorno de forma robusta (.env y fallback .env.production)
 try {
     // Intentar vendor autoload cuando esté disponible
     if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
         require_once __DIR__ . '/../../vendor/autoload.php';
         if (class_exists('Dotenv\\Dotenv')) {
-            $dotenv = Dotenv\Dotenv::createMutable(__DIR__ . '/../../');
+            $rootPath = __DIR__ . '/../../';
+            $dotenv = Dotenv\Dotenv::createMutable($rootPath);
             $dotenv->load();
+            // Si no hay variables cargadas clave, intentar .env.production
+            $hasDbEnv = (getenv('DB_HOST') !== false) || isset($_ENV['DB_HOST']);
+            if (!$hasDbEnv && file_exists($rootPath . '.env.production')) {
+                try {
+                    $dotenvProd = Dotenv\Dotenv::createMutable($rootPath, '.env.production');
+                    $dotenvProd->load();
+                } catch (Throwable $e) {
+                    // Continuar incluso si falla
+                }
+            }
         }
     } else {
-        // Fallback mínimo: cargar .env manualmente
-        $envFile = __DIR__ . '/../../.env';
-        if (is_file($envFile)) {
+        // Fallback mínimo: cargar .env o .env.production manualmente
+        $rootPath = __DIR__ . '/../../';
+        $envFiles = [];
+        if (is_file($rootPath . '.env')) $envFiles[] = $rootPath . '.env';
+        if (is_file($rootPath . '.env.production')) $envFiles[] = $rootPath . '.env.production';
+        foreach ($envFiles as $envFile) {
             foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
                 if (strpos(ltrim($line), '#') === 0) continue;
                 $parts = explode('=', $line, 2);
                 if (count($parts) === 2) {
-                    $_ENV[trim($parts[0])] = trim($parts[1]);
-                    @putenv(trim($parts[0]) . '=' . trim($parts[1]));
+                    $k = trim($parts[0]);
+                    $v = trim($parts[1]);
+                    $_ENV[$k] = $v;
+                    @putenv($k . '=' . $v);
                 }
             }
         }
@@ -80,12 +96,19 @@ $checks = [
 ];
 
 // Verificar variables esenciales
+// Permitir alias DB_NAME para DB_DATABASE y detectar variables mínimas
 $requiredEnv = ['DB_HOST','DB_PORT','DB_DATABASE','DB_USERNAME'];
 $envPresent = 0;
 foreach ($requiredEnv as $k) {
-    if (getenv($k) !== false || isset($_ENV[$k])) { $envPresent++; }
+    if ($k === 'DB_DATABASE') {
+        $hasDbName = (getenv('DB_DATABASE') !== false) || isset($_ENV['DB_DATABASE'])
+            || (getenv('DB_NAME') !== false) || isset($_ENV['DB_NAME']);
+        if ($hasDbName) { $envPresent++; }
+    } else {
+        if (getenv($k) !== false || isset($_ENV[$k])) { $envPresent++; }
+    }
 }
-$checks['env_loaded'] = ($envPresent >= 3); // permitir DB_NAME alias
+$checks['env_loaded'] = ($envPresent >= 3);
 
 // Paths y permisos relativos al root del proyecto
 $root = realpath(__DIR__ . '/../../');
