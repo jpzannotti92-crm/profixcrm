@@ -8,11 +8,14 @@ DirectoryIndex public/index.production.php public/index.php index.php index.html
 
 RewriteEngine On
 
-# No enviar llamadas a API al directorio /public (manejo directo en raíz)
+# Rutas API amigables: mapear /api/<nombre> a /api/<nombre>.php en raíz
 RewriteCond %{REQUEST_URI} ^/api/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+RewriteRule ^api/([a-z0-9_-]+)/?$ api/$1.php [QSA,L]
+
+# Alias específico: health-deep -> health.php
+RewriteRule ^api/health-deep/?$ api/health.php [QSA,L]
 
 # Envía todo al directorio /public SIN redirección externa (evita 404 por caché)
 RewriteCond %{REQUEST_URI} !^/public/
