@@ -1,0 +1,13 @@
+# iaTrade CRM - .htaccess para despliegue en subcarpeta (ej: /profixcrm)
+Options -Indexes
+DirectoryIndex public/index.php
+
+RewriteEngine On
+RewriteBase /profixcrm/
+
+# Enviar todo al directorio public de la subcarpeta
+RewriteCond %{REQUEST_URI} !^/profixcrm/public/
+RewriteRule ^(.*)$ public/$1 [L]
+
+# Alternativa (si tu hosting exige rutas absolutas):
+# RewriteRule ^(.*)$ /profixcrm/public/$1 [L,R=302]

@@ -1,0 +1,321 @@
+<!-- Vista del Módulo de Usuarios -->
+<div class="users-module">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Usuarios</h2>
+        <button class="btn btn-primary" onclick="UsersModule.showCreateModal()">
+            <i class="fas fa-user-plus me-2"></i>
+            Crear Empleado
+        </button>
+    </div>
+    
+    <!-- Filtros de Usuarios -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filtros
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Rol</label>
+                    <select class="form-control" id="filterUserRole">
+                        <option value="">Todos los Roles</option>
+                        <option value="admin">Administrador</option>
+                        <option value="manager">Manager</option>
+                        <option value="senior_sales">Senior Sales</option>
+                        <option value="sales">Sales</option>
+                        <option value="retention">Retention</option>
+                        <option value="vip">VIP</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Desk</label>
+                    <select class="form-control" id="filterUserDesk">
+                        <option value="">Todos los Desks</option>
+                        <option value="1">Desk Alpha</option>
+                        <option value="2">Desk Beta</option>
+                        <option value="3">Desk Gamma</option>
+                        <option value="4">Desk Delta</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Estado</label>
+                    <select class="form-control" id="filterUserStatus">
+                        <option value="">Todos los Estados</option>
+                        <option value="active">Activo</option>
+                        <option value="inactive">Inactivo</option>
+                        <option value="suspended">Suspendido</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Buscar</label>
+                    <input type="text" class="form-control" id="filterUserSearch" placeholder="Nombre, email, usuario...">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 text-end">
+                    <button class="btn btn-primary" onclick="UsersModule.applyFilters()">
+                        <i class="fas fa-search me-2"></i>
+                        Aplicar Filtros
+                    </button>
+                    <button class="btn btn-outline-secondary ms-2" onclick="UsersModule.clearFilters()">
+                        <i class="fas fa-times me-2"></i>
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas de Usuarios -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary" id="totalUsers">24</h3>
+                    <p class="mb-0">Total Usuarios</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success" id="activeUsers">21</h3>
+                    <p class="mb-0">Activos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info" id="onlineUsers">8</h3>
+                    <p class="mb-0">En Línea</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning" id="newUsers">3</h3>
+                    <p class="mb-0">Nuevos (7 días)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de Usuarios -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Lista de Usuarios</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" onclick="UsersModule.exportUsers()">
+                    <i class="fas fa-download me-1"></i>
+                    Exportar
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Acciones en lote
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="UsersModule.bulkActivate()">Activar seleccionados</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="UsersModule.bulkDeactivate()">Desactivar seleccionados</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="UsersModule.bulkAssignDesk()">Asignar a desk</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="UsersModule.bulkDelete()">Eliminar seleccionados</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllUsers"></th>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Desk</th>
+                            <th>Estado</th>
+                            <th>Último Login</th>
+                            <th>Performance</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Contenido se carga dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination justify-content-center mb-0" id="usersPagination">
+                    <!-- Paginación se genera dinámicamente -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Usuario -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalTitle">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Crear Empleado
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="userFirstName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="userLastName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="userEmail" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Usuario <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="userPhone" placeholder="+1 234 567 8900">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control" id="userBirthDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Rol <span class="text-danger">*</span></label>
+                            <select class="form-control" id="userRole" required>
+                                <option value="">Seleccionar rol...</option>
+                                <option value="admin">Administrador</option>
+                                <option value="manager">Manager</option>
+                                <option value="senior_sales">Senior Sales</option>
+                                <option value="sales">Sales</option>
+                                <option value="retention">Retention</option>
+                                <option value="vip">VIP</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Desk</label>
+                            <select class="form-control" id="userDesk">
+                                <option value="">Sin asignar</option>
+                                <option value="1">Desk Alpha</option>
+                                <option value="2">Desk Beta</option>
+                                <option value="3">Desk Gamma</option>
+                                <option value="4">Desk Delta</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Salario Base</label>
+                            <input type="number" class="form-control" id="userSalary" placeholder="50000">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Comisión (%)</label>
+                            <input type="number" class="form-control" id="userCommission" placeholder="2.5" step="0.1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha de Inicio</label>
+                            <input type="date" class="form-control" id="userStartDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-control" id="userStatus">
+                                <option value="active">Activo</option>
+                                <option value="inactive">Inactivo</option>
+                                <option value="suspended">Suspendido</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3" id="passwordSection">
+                            <label class="form-label">Contraseña Temporal <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="userPassword" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="UsersModule.generatePassword()">
+                                    <i class="fas fa-random"></i> Generar
+                                </button>
+                            </div>
+                            <small class="text-muted">El usuario deberá cambiar la contraseña en su primer login</small>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Notas</label>
+                            <textarea class="form-control" id="userNotes" rows="3" placeholder="Información adicional sobre el empleado..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" checked>
+                                <label class="form-check-label" for="sendWelcomeEmail">
+                                    Enviar email de bienvenida con credenciales
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="UsersModule.saveUser()">
+                    <i class="fas fa-save me-1"></i>Guardar Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Perfil de Usuario -->
+<div class="modal fade" id="userProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user me-2"></i>
+                    Perfil de Usuario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userProfileContent">
+                <!-- Contenido se carga dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="UsersModule.editUserFromProfile()">
+                    <i class="fas fa-edit me-1"></i>Editar Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Estadísticas de Usuario -->
+<div class="modal fade" id="userStatsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Estadísticas de Performance
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userStatsContent">
+                <!-- Contenido se carga dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

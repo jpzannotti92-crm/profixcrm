@@ -1,0 +1,395 @@
+<!-- Vista del Módulo de Desks -->
+<div class="desks-module">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Desks</h2>
+        <button class="btn btn-primary" onclick="DesksModule.showCreateWizard()">
+            <i class="fas fa-plus me-2"></i>
+            Crear Nuevo Desk
+        </button>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <select class="form-control" id="filterDeskStatus">
+                        <option value="">Todos los Estados</option>
+                        <option value="active">Activo</option>
+                        <option value="inactive">Inactivo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-control" id="filterDeskManager">
+                        <option value="">Todos los Managers</option>
+                        <option value="1">María García</option>
+                        <option value="2">Carlos López</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="filterDeskSearch" placeholder="Buscar desk...">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" onclick="DesksModule.applyFilters()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary" id="totalDesks">4</h3>
+                    <p class="mb-0">Total Desks</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success" id="activeDesks">3</h3>
+                    <p class="mb-0">Activos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info" id="totalMembers">28</h3>
+                    <p class="mb-0">Total Miembros</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning" id="totalRevenue">$125,450</h3>
+                    <p class="mb-0">Revenue Total</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Desks Cards -->
+    <div class="row" id="desksContainer">
+        <!-- Los desks se cargan dinámicamente -->
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Desk -->
+<div class="modal fade" id="deskModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deskModalTitle">
+                    <i class="fas fa-building me-2"></i>
+                    Asistente para Crear Desk
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Indicador de pasos -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <div class="step-indicator active" id="step1Indicator">
+                                <div class="step-number">1</div>
+                                <div class="step-title">Información Básica</div>
+                            </div>
+                            <div class="step-indicator" id="step2Indicator">
+                                <div class="step-number">2</div>
+                                <div class="step-title">Seleccionar Empleados</div>
+                            </div>
+                            <div class="step-indicator" id="step3Indicator">
+                                <div class="step-number">3</div>
+                                <div class="step-title">Configuración</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 1: Información Básica -->
+                <div class="wizard-step" id="deskStep1">
+                    <h6 class="mb-3">Paso 1: Información Básica</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre del Desk</label>
+                            <input type="text" class="form-control" id="deskName" placeholder="Ej: Desk Gamma" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Manager</label>
+                            <select class="form-control" id="deskManager" required>
+                                <option value="">Seleccionar manager...</option>
+                                <option value="1">María García</option>
+                                <option value="2">Carlos López</option>
+                                <option value="3">Ana Martínez</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="deskDescription" rows="3" placeholder="Descripción del equipo..."></textarea>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Meta Mensual ($)</label>
+                            <input type="number" class="form-control" id="deskTarget" placeholder="100000">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Comisión (%)</label>
+                            <input type="number" class="form-control" id="deskCommission" placeholder="2.5" step="0.1">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tipo de Desk</label>
+                            <select class="form-control" id="deskType">
+                                <option value="sales">Ventas</option>
+                                <option value="retention">Retención</option>
+                                <option value="vip">VIP</option>
+                                <option value="recovery">Recovery</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Paso 2: Seleccionar Empleados -->
+                <div class="wizard-step" id="deskStep2" style="display: none;">
+                    <h6 class="mb-3">Paso 2: Seleccionar Empleados</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Empleados Disponibles</h6>
+                            <div class="mb-3">
+                                <input type="text" class="form-control" id="searchEmployees" placeholder="Buscar empleados...">
+                            </div>
+                            <div class="list-group" style="max-height: 400px; overflow-y: auto;" id="availableEmployees">
+                                <!-- Se carga dinámicamente -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Miembros del Desk</h6>
+                            <div class="alert alert-info">
+                                <small><i class="fas fa-info-circle me-1"></i>Arrastra empleados aquí o usa los botones de agregar</small>
+                            </div>
+                            <div class="list-group" id="deskMembers" style="min-height: 300px;">
+                                <div class="list-group-item text-muted text-center" id="noMembersMessage">
+                                    No hay miembros seleccionados
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 3: Configuración -->
+                <div class="wizard-step" id="deskStep3" style="display: none;">
+                    <h6 class="mb-3">Paso 3: Configuración Avanzada</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Horario de Trabajo</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="time" class="form-control" id="workStartTime" value="09:00">
+                                </div>
+                                <div class="col-6">
+                                    <input type="time" class="form-control" id="workEndTime" value="18:00">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Zona Horaria</label>
+                            <select class="form-control" id="deskTimezone">
+                                <option value="Europe/Madrid">Madrid (GMT+1)</option>
+                                <option value="America/New_York">New York (GMT-5)</option>
+                                <option value="Asia/Tokyo">Tokyo (GMT+9)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Días Laborales</label>
+                            <div class="form-check-group">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="monday" value="1" checked>
+                                    <label class="form-check-label" for="monday">L</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="tuesday" value="2" checked>
+                                    <label class="form-check-label" for="tuesday">M</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="wednesday" value="3" checked>
+                                    <label class="form-check-label" for="wednesday">X</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="thursday" value="4" checked>
+                                    <label class="form-check-label" for="thursday">J</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="friday" value="5" checked>
+                                    <label class="form-check-label" for="friday">V</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="saturday" value="6">
+                                    <label class="form-check-label" for="saturday">S</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="sunday" value="0">
+                                    <label class="form-check-label" for="sunday">D</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Auto-asignación de Leads</label>
+                            <select class="form-control" id="autoAssignment">
+                                <option value="round_robin">Round Robin</option>
+                                <option value="random">Aleatorio</option>
+                                <option value="manual">Manual</option>
+                                <option value="performance">Por Performance</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="enableNotifications" checked>
+                                <label class="form-check-label" for="enableNotifications">
+                                    Habilitar notificaciones para el desk
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="enableReports" checked>
+                                <label class="form-check-label" for="enableReports">
+                                    Generar reportes automáticos
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-outline-primary" id="prevStepBtn" style="display: none;" onclick="DesksModule.previousStep()">
+                    <i class="fas fa-arrow-left me-1"></i>Anterior
+                </button>
+                <button type="button" class="btn btn-primary" id="nextStepBtn" onclick="DesksModule.nextStep()">
+                    Siguiente<i class="fas fa-arrow-right ms-1"></i>
+                </button>
+                <button type="button" class="btn btn-success" id="createDeskBtn" style="display: none;" onclick="DesksModule.saveDesk()">
+                    <i class="fas fa-save me-1"></i>Crear Desk
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Gestionar Miembros -->
+<div class="modal fade" id="manageMembersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-users me-2"></i>
+                    Gestionar Miembros del Desk
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Miembros Actuales</h6>
+                        <div class="list-group" id="currentMembers">
+                            <!-- Se carga dinámicamente -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Agregar Miembros</h6>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" placeholder="Buscar empleados...">
+                        </div>
+                        <div class="list-group" id="availableMembersToAdd">
+                            <!-- Se carga dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="DesksModule.saveMemberChanges()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+}
+
+.step-indicator:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 60%;
+    width: 80%;
+    height: 2px;
+    background-color: #dee2e6;
+    z-index: 1;
+}
+
+.step-indicator.active:not(:last-child)::after {
+    background-color: #0d6efd;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+.step-indicator.active .step-number {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.step-title {
+    font-size: 0.875rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.step-indicator.active .step-title {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.desk-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.desk-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.progress-ring {
+    width: 60px;
+    height: 60px;
+}
+
+.form-check-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+</style>

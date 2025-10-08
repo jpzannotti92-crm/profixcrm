@@ -1,0 +1,424 @@
+<!-- Vista del Módulo de Roles -->
+<div class="roles-module">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Roles y Permisos</h2>
+        <button class="btn btn-primary" onclick="RolesModule.showCreateModal()">
+            <i class="fas fa-shield-alt me-2"></i>
+            Crear Rol
+        </button>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="filterRoleSearch" placeholder="Buscar roles...">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-control" id="filterRoleLevel">
+                        <option value="">Todos los Niveles</option>
+                        <option value="1">Nivel 1 - Básico</option>
+                        <option value="2">Nivel 2 - Intermedio</option>
+                        <option value="3">Nivel 3 - Avanzado</option>
+                        <option value="4">Nivel 4 - Administrador</option>
+                        <option value="5">Nivel 5 - Super Admin</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-control" id="filterRoleStatus">
+                        <option value="">Todos los Estados</option>
+                        <option value="active">Activo</option>
+                        <option value="inactive">Inactivo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" onclick="RolesModule.applyFilters()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary" id="totalRoles">8</h3>
+                    <p class="mb-0">Total Roles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success" id="activeRoles">7</h3>
+                    <p class="mb-0">Activos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info" id="totalUsers">24</h3>
+                    <p class="mb-0">Usuarios Asignados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning" id="totalPermissions">32</h3>
+                    <p class="mb-0">Permisos Únicos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de Roles -->
+    <div class="row" id="rolesContainer">
+        <!-- Los roles se cargan dinámicamente -->
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Rol -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalTitle">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Crear Rol
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Nombre del Rol <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="roleName" placeholder="Ej: Supervisor" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Nombre para Mostrar <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="roleDisplayName" placeholder="Ej: Supervisor de Ventas" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Nivel <span class="text-danger">*</span></label>
+                            <select class="form-control" id="roleLevel" required>
+                                <option value="">Seleccionar nivel...</option>
+                                <option value="1">1 - Básico</option>
+                                <option value="2">2 - Intermedio</option>
+                                <option value="3">3 - Avanzado</option>
+                                <option value="4">4 - Administrador</option>
+                                <option value="5">5 - Super Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="roleDescription" rows="2" placeholder="Descripción del rol..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3">
+                        <i class="fas fa-key me-2"></i>
+                        Permisos del Sistema
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="RolesModule.selectAllPermissions()">
+                            Seleccionar Todos
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="RolesModule.clearAllPermissions()">
+                            Limpiar Todos
+                        </button>
+                    </h6>
+                    
+                    <div class="row">
+                        <!-- Módulo Leads -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <input type="checkbox" class="form-check-input me-2" id="selectAllLeads" onchange="RolesModule.toggleModulePermissions('leads', this.checked)">
+                                        <i class="fas fa-users text-primary me-1"></i>
+                                        Leads
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox leads-permission" type="checkbox" id="leads_create" value="leads.create">
+                                        <label class="form-check-label" for="leads_create">Crear</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox leads-permission" type="checkbox" id="leads_read" value="leads.read">
+                                        <label class="form-check-label" for="leads_read">Ver</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox leads-permission" type="checkbox" id="leads_update" value="leads.update">
+                                        <label class="form-check-label" for="leads_update">Actualizar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox leads-permission" type="checkbox" id="leads_delete" value="leads.delete">
+                                        <label class="form-check-label" for="leads_delete">Eliminar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox leads-permission" type="checkbox" id="leads_assign" value="leads.assign">
+                                        <label class="form-check-label" for="leads_assign">Asignar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox leads-permission" type="checkbox" id="leads_export" value="leads.export">
+                                        <label class="form-check-label" for="leads_export">Exportar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox leads-permission" type="checkbox" id="leads_import" value="leads.import">
+                                        <label class="form-check-label" for="leads_import">Importar</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Módulo Usuarios -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <input type="checkbox" class="form-check-input me-2" id="selectAllUsers" onchange="RolesModule.toggleModulePermissions('users', this.checked)">
+                                        <i class="fas fa-user-tie text-success me-1"></i>
+                                        Usuarios
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox users-permission" type="checkbox" id="users_create" value="users.create">
+                                        <label class="form-check-label" for="users_create">Crear</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox users-permission" type="checkbox" id="users_read" value="users.read">
+                                        <label class="form-check-label" for="users_read">Ver</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox users-permission" type="checkbox" id="users_update" value="users.update">
+                                        <label class="form-check-label" for="users_update">Actualizar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox users-permission" type="checkbox" id="users_delete" value="users.delete">
+                                        <label class="form-check-label" for="users_delete">Eliminar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox users-permission" type="checkbox" id="users_roles" value="users.roles">
+                                        <label class="form-check-label" for="users_roles">Gestionar Roles</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Módulo Desks -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <input type="checkbox" class="form-check-input me-2" id="selectAllDesks" onchange="RolesModule.toggleModulePermissions('desks', this.checked)">
+                                        <i class="fas fa-building text-warning me-1"></i>
+                                        Desks
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox desks-permission" type="checkbox" id="desks_create" value="desks.create">
+                                        <label class="form-check-label" for="desks_create">Crear</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox desks-permission" type="checkbox" id="desks_read" value="desks.read">
+                                        <label class="form-check-label" for="desks_read">Ver</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox desks-permission" type="checkbox" id="desks_update" value="desks.update">
+                                        <label class="form-check-label" for="desks_update">Actualizar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox desks-permission" type="checkbox" id="desks_delete" value="desks.delete">
+                                        <label class="form-check-label" for="desks_delete">Eliminar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox desks-permission" type="checkbox" id="desks_manage" value="desks.manage">
+                                        <label class="form-check-label" for="desks_manage">Gestionar Miembros</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Módulo Reportes -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <input type="checkbox" class="form-check-input me-2" id="selectAllReports" onchange="RolesModule.toggleModulePermissions('reports', this.checked)">
+                                        <i class="fas fa-chart-bar text-info me-1"></i>
+                                        Reportes
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox reports-permission" type="checkbox" id="reports_view" value="reports.view">
+                                        <label class="form-check-label" for="reports_view">Ver Reportes</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox reports-permission" type="checkbox" id="reports_export" value="reports.export">
+                                        <label class="form-check-label" for="reports_export">Exportar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox reports-permission" type="checkbox" id="reports_advanced" value="reports.advanced">
+                                        <label class="form-check-label" for="reports_advanced">Reportes Avanzados</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox reports-permission" type="checkbox" id="reports_create" value="reports.create">
+                                        <label class="form-check-label" for="reports_create">Crear Reportes</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Módulo KPIs -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <input type="checkbox" class="form-check-input me-2" id="selectAllKpis" onchange="RolesModule.toggleModulePermissions('kpis', this.checked)">
+                                        <i class="fas fa-analytics text-danger me-1"></i>
+                                        KPIs
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox kpis-permission" type="checkbox" id="kpis_view" value="kpis.view">
+                                        <label class="form-check-label" for="kpis_view">Ver KPIs</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox kpis-permission" type="checkbox" id="kpis_manage" value="kpis.manage">
+                                        <label class="form-check-label" for="kpis_manage">Gestionar KPIs</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox kpis-permission" type="checkbox" id="kpis_targets" value="kpis.targets">
+                                        <label class="form-check-label" for="kpis_targets">Definir Metas</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Módulo Configuración -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <input type="checkbox" class="form-check-input me-2" id="selectAllSettings" onchange="RolesModule.toggleModulePermissions('settings', this.checked)">
+                                        <i class="fas fa-cog text-secondary me-1"></i>
+                                        Configuración
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox settings-permission" type="checkbox" id="settings_view" value="settings.view">
+                                        <label class="form-check-label" for="settings_view">Ver Configuración</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox settings-permission" type="checkbox" id="settings_update" value="settings.update">
+                                        <label class="form-check-label" for="settings_update">Actualizar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox settings-permission" type="checkbox" id="settings_system" value="settings.system">
+                                        <label class="form-check-label" for="settings_system">Config. Sistema</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Módulo Roles -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <input type="checkbox" class="form-check-input me-2" id="selectAllRoles" onchange="RolesModule.toggleModulePermissions('roles', this.checked)">
+                                        <i class="fas fa-shield-alt text-dark me-1"></i>
+                                        Roles
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox roles-permission" type="checkbox" id="roles_create" value="roles.create">
+                                        <label class="form-check-label" for="roles_create">Crear</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox roles-permission" type="checkbox" id="roles_read" value="roles.read">
+                                        <label class="form-check-label" for="roles_read">Ver</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox roles-permission" type="checkbox" id="roles_update" value="roles.update">
+                                        <label class="form-check-label" for="roles_update">Actualizar</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox roles-permission" type="checkbox" id="roles_delete" value="roles.delete">
+                                        <label class="form-check-label" for="roles_delete">Eliminar</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Módulo Auditoría -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <input type="checkbox" class="form-check-input me-2" id="selectAllAudit" onchange="RolesModule.toggleModulePermissions('audit', this.checked)">
+                                        <i class="fas fa-history text-muted me-1"></i>
+                                        Auditoría
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox audit-permission" type="checkbox" id="audit_view" value="audit.view">
+                                        <label class="form-check-label" for="audit_view">Ver Logs</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox audit-permission" type="checkbox" id="audit_export" value="audit.export">
+                                        <label class="form-check-label" for="audit_export">Exportar Logs</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox audit-permission" type="checkbox" id="audit_delete" value="audit.delete">
+                                        <label class="form-check-label" for="audit_delete">Eliminar Logs</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="RolesModule.saveRole()">
+                    <i class="fas fa-save me-1"></i>Guardar Rol
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Usuarios del Rol -->
+<div class="modal fade" id="roleUsersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-users me-2"></i>
+                    Usuarios del Rol
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="roleUsersContent">
+                <!-- Contenido se carga dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

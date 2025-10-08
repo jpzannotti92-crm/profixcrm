@@ -1,0 +1,27 @@
+# ========================================
+# IATRADE CRM - Configuración Mínima
+# ========================================
+
+# Habilitar motor de reescritura
+RewriteEngine On
+
+# ========================================
+# REESCRITURA BÁSICA
+# ========================================
+
+# Redireccionar al directorio public
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]
+
+# ========================================
+# PROTECCIÓN MÍNIMA
+# ========================================
+
+# Proteger archivo .env
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Deshabilitar listado de directorios
+Options -Indexes

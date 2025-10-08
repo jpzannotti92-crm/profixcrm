@@ -1,0 +1,847 @@
+<!-- Vista Detallada del Lead -->
+<div class="lead-detail-module">
+    <!-- Header del Lead -->
+    <div class="lead-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-outline-secondary me-3" onclick="LeadDetail.goBack()">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="lead-avatar me-3">
+                        <div class="avatar-circle bg-primary">
+                            <span id="leadInitials">JD</span>
+                        </div>
+                        <div class="status-indicator" id="leadStatusIndicator"></div>
+                    </div>
+                    <div>
+                        <h2 class="mb-1" id="leadFullName">John Doe</h2>
+                        <div class="lead-meta">
+                            <span class="badge bg-primary me-2" id="leadId">#L-001247</span>
+                            <span class="text-muted" id="leadCreatedDate">Creado: 15 Ene 2024</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="btn-group me-2">
+                    <button class="btn btn-success" onclick="LeadDetail.callLead()">
+                        <i class="fas fa-phone me-1"></i>
+                        Llamar
+                    </button>
+                    <button class="btn btn-info" onclick="LeadDetail.sendEmail()">
+                        <i class="fas fa-envelope me-1"></i>
+                        Email
+                    </button>
+                    <button class="btn btn-warning" onclick="LeadDetail.scheduleCallback()">
+                        <i class="fas fa-calendar me-1"></i>
+                        Agendar
+                    </button>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="LeadDetail.editLead()">
+                            <i class="fas fa-edit me-2"></i>Editar Lead
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="LeadDetail.duplicateLead()">
+                            <i class="fas fa-copy me-2"></i>Duplicar
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="LeadDetail.transferLead()">
+                            <i class="fas fa-exchange-alt me-2"></i>Transferir
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="LeadDetail.deleteLead()">
+                            <i class="fas fa-trash me-2"></i>Eliminar
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs del Lead -->
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card-small">
+                <div class="kpi-icon bg-primary">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value" id="leadScore">85</div>
+                    <div class="kpi-label">Lead Score</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card-small">
+                <div class="kpi-icon bg-success">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value" id="totalCalls">12</div>
+                    <div class="kpi-label">Llamadas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card-small">
+                <div class="kpi-icon bg-info">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value" id="totalEmails">8</div>
+                    <div class="kpi-label">Emails</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card-small">
+                <div class="kpi-icon bg-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value" id="daysSinceContact">3</div>
+                    <div class="kpi-label">Días s/contacto</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card-small">
+                <div class="kpi-icon bg-danger">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value" id="potentialValue">$2.5K</div>
+                    <div class="kpi-label">Valor Potencial</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card-small">
+                <div class="kpi-icon bg-dark">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value" id="conversionProbability">78%</div>
+                    <div class="kpi-label">Prob. Conversión</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="row">
+        <!-- Columna Izquierda -->
+        <div class="col-xl-8">
+            <!-- Timeline de Actividades -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Timeline de Actividades
+                    </h5>
+                    <button class="btn btn-primary btn-sm" onclick="LeadDetail.addActivity()">
+                        <i class="fas fa-plus me-1"></i>
+                        Nueva Actividad
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="timeline" id="activityTimeline">
+                        <!-- Las actividades se cargan dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos de Engagement -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">Engagement por Semana</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="engagementChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">Canales de Comunicación</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="channelsChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notas y Comentarios -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-sticky-note me-2"></i>
+                        Notas y Comentarios
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="notes-section" id="notesSection">
+                        <!-- Las notas se cargan dinámicamente -->
+                    </div>
+                    <div class="add-note-section mt-3">
+                        <textarea class="form-control mb-2" id="newNote" rows="3" placeholder="Agregar nueva nota..."></textarea>
+                        <button class="btn btn-primary btn-sm" onclick="LeadDetail.addNote()">
+                            <i class="fas fa-save me-1"></i>
+                            Guardar Nota
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha -->
+        <div class="col-xl-4">
+            <!-- Información del Lead -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Información del Lead
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="lead-info">
+                        <div class="info-item">
+                            <label>Estado Actual</label>
+                            <div class="d-flex align-items-center">
+                                <span class="status-badge status-interested me-2" id="currentStatus">Interesado</span>
+                                <button class="btn btn-sm btn-outline-primary" onclick="LeadDetail.changeStatus()">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <label>Prioridad</label>
+                            <div class="d-flex align-items-center">
+                                <span class="priority-badge priority-high me-2" id="currentPriority">Alta</span>
+                                <button class="btn btn-sm btn-outline-primary" onclick="LeadDetail.changePriority()">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <label>Email</label>
+                            <div class="d-flex align-items-center">
+                                <span id="leadEmail">john.doe@email.com</span>
+                                <button class="btn btn-sm btn-outline-success ms-2" onclick="LeadDetail.sendEmail()">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <label>Teléfono</label>
+                            <div class="d-flex align-items-center">
+                                <span id="leadPhone">+1 234 567 8900</span>
+                                <button class="btn btn-sm btn-outline-success ms-2" onclick="LeadDetail.callLead()">
+                                    <i class="fas fa-phone"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <label>País</label>
+                            <span id="leadCountry">Estados Unidos</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Fuente</label>
+                            <span class="source-badge" id="leadSource">Google Ads</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Asignado a</label>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-small bg-primary me-2">
+                                    <span>MG</span>
+                                </div>
+                                <span id="assignedTo">María García</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="LeadDetail.reassign()">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cuentas de Trading Vinculadas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <button class="btn btn-link p-0 text-decoration-none text-start w-100 d-flex align-items-center justify-content-between" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#tradingAccountsCollapse" 
+                                aria-expanded="true" 
+                                aria-controls="tradingAccountsCollapse">
+                            <span>
+                                <i class="fas fa-chart-line me-2"></i>
+                                Cuentas de Trading Vinculadas
+                            </span>
+                            <i class="fas fa-chevron-down transition-transform" id="tradingAccountsChevron"></i>
+                        </button>
+                    </h5>
+                </div>
+                <div class="collapse show" id="tradingAccountsCollapse">
+                    <div class="card-body">
+                        <div class="trading-accounts" id="tradingAccounts">
+                            <!-- Las cuentas de trading se cargan dinámicamente -->
+                            <div class="text-center text-muted py-3" id="noTradingAccounts">
+                                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                <p class="mb-0">No hay cuentas de trading vinculadas</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm w-100" onclick="LeadDetail.linkTradingAccount()">
+                            <i class="fas fa-link me-1"></i>
+                            Vincular Cuenta de Trading
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finanzas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <button class="btn btn-link p-0 text-decoration-none text-start w-100 d-flex align-items-center justify-content-between" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#financesCollapse" 
+                                aria-expanded="true" 
+                                aria-controls="financesCollapse">
+                            <span>
+                                <i class="fas fa-dollar-sign me-2"></i>
+                                Finanzas
+                            </span>
+                            <i class="fas fa-chevron-down transition-transform" id="financesChevron"></i>
+                        </button>
+                    </h5>
+                </div>
+                <div class="collapse show" id="financesCollapse">
+                    <div class="card-body">
+                        <div class="finances-summary mb-3">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-arrow-down text-success me-2"></i>
+                                            <div>
+                                                <div class="text-muted small">Total Depósitos</div>
+                                                <div class="fw-bold text-success" id="totalDeposits">$0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-danger bg-opacity-10 p-3 rounded">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-arrow-up text-danger me-2"></i>
+                                            <div>
+                                                <div class="text-muted small">Total Retiros</div>
+                                                <div class="fw-bold text-danger" id="totalWithdrawals">$0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-balance-scale text-primary me-2"></i>
+                                            <div>
+                                                <div class="text-muted small">Balance Neto</div>
+                                                <div class="fw-bold text-primary" id="netBalance">$0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="finances-transactions" id="financesTransactions">
+                            <!-- Las transacciones se cargan dinámicamente -->
+                            <div class="text-center text-muted py-3" id="noTransactions">
+                                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                                <p class="mb-0">No hay transacciones financieras registradas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Próximas Acciones -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        Próximas Acciones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="next-actions" id="nextActions">
+                        <!-- Las acciones se cargan dinámicamente -->
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="LeadDetail.addTask()">
+                        <i class="fas fa-plus me-1"></i>
+                        Agregar Tarea
+                    </button>
+                </div>
+            </div>
+
+            <!-- Documentos -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Documentos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="documents-list" id="documentsList">
+                        <!-- Los documentos se cargan dinámicamente -->
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="LeadDetail.uploadDocument()">
+                        <i class="fas fa-upload me-1"></i>
+                        Subir Documento
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leads Relacionados -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link me-2"></i>
+                        Leads Relacionados
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="related-leads" id="relatedLeads">
+                        <!-- Los leads relacionados se cargan dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cambiar Estado -->
+<div class="modal fade" id="changeStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cambiar Estado del Lead</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nuevo Estado</label>
+                    <select class="form-control" id="newStatus">
+                        <option value="new">Nuevo</option>
+                        <option value="contacted">Contactado</option>
+                        <option value="interested">Interesado</option>
+                        <option value="demo">Demo</option>
+                        <option value="ftd">FTD</option>
+                        <option value="client">Cliente</option>
+                        <option value="lost">Perdido</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Comentario</label>
+                    <textarea class="form-control" id="statusComment" rows="3" placeholder="Razón del cambio de estado..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="LeadDetail.saveStatusChange()">Guardar Cambio</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Actividad -->
+<div class="modal fade" id="addActivityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Actividad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tipo de Actividad</label>
+                    <select class="form-control" id="activityType">
+                        <option value="call">Llamada</option>
+                        <option value="email">Email</option>
+                        <option value="meeting">Reunión</option>
+                        <option value="demo">Demo</option>
+                        <option value="note">Nota</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-control" id="activityDescription" rows="3" placeholder="Describe la actividad..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Resultado</label>
+                    <select class="form-control" id="activityResult">
+                        <option value="positive">Positivo</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="negative">Negativo</option>
+                        <option value="no_answer">Sin respuesta</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="LeadDetail.saveActivity()">Guardar Actividad</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos específicos para la vista del lead */
+.lead-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.lead-avatar {
+    position: relative;
+}
+
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 3px solid white;
+}
+
+.kpi-card-small {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+}
+
+.kpi-card-small:hover {
+    transform: translateY(-2px);
+}
+
+.kpi-card-small .kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-card-small .kpi-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.kpi-card-small .kpi-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -27px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px #e5e7eb;
+}
+
+.timeline-item.positive::before { background: #10b981; }
+.timeline-item.negative::before { background: #ef4444; }
+.timeline-item.neutral::before { background: #f59e0b; }
+
+.timeline-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-type {
+    font-weight: 600;
+    color: #374151;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.timeline-description {
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-result {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.result-positive { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.result-negative { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.result-neutral { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+.info-item {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.info-item label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.25rem;
+}
+
+.source-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.user-avatar-small {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
+.next-action-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.next-action-item:last-child {
+    margin-bottom: 0;
+}
+
+.action-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    color: white;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.action-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.document-item:last-child {
+    margin-bottom: 0;
+}
+
+.document-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.document-info {
+    flex: 1;
+}
+
+.document-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.document-size {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.related-lead-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.related-lead-item:hover {
+    background-color: #f9fafb;
+}
+
+.related-lead-item:last-child {
+    margin-bottom: 0;
+}
+
+.trading-account-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.trading-account-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.note-item {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.note-item:last-child {
+    margin-bottom: 0;
+}
+
+.note-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.note-author {
+    font-weight: 600;
+    color: #374151;
+}
+
+.note-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.note-content {
+    color: #4b5563;
+    line-height: 1.5;
+}
+</style>

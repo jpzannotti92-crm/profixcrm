@@ -1,0 +1,69 @@
+# iaTrade CRM - Configuración Apache
+# Generado automáticamente el 2025-09-24 07:32:42
+
+DirectoryIndex index.php index.html
+Options -Indexes
+
+# Permitir acceso explícito a archivos estáticos
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|ttf|woff|woff2)$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Allow from all
+    </IfModule>
+</FilesMatch>
+
+# Proteger archivos sensibles
+<Files ~ "\.(env|log|ini|conf|sql|json)$">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Cabeceras de seguridad
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Configuración PHP
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+</IfModule>
+
+# Reescritura deshabilitada para evitar conflictos.
+# El routing lo manejan index.php y archivos puente en /api.
+
+# Compresión
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Cache
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+</IfModule>
+
+# Fallback de errores: enviar 404/403 al manejador de errores
+ErrorDocument 404 /error_handler.php
+ErrorDocument 403 /error_handler.php

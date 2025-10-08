@@ -1,0 +1,319 @@
+<!-- Vista del Módulo de Leads -->
+<div class="leads-module">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Leads</h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="LeadsModule.showImportModal()">
+                <i class="fas fa-upload me-2"></i>
+                Importar Leads
+            </button>
+            <button class="btn btn-primary" onclick="LeadsModule.showCreateModal()">
+                <i class="fas fa-plus me-2"></i>
+                Nuevo Lead
+            </button>
+        </div>
+    </div>
+    
+    <!-- Filtros Avanzados -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filtros Avanzados
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Estado</label>
+                    <select class="form-control" id="filterStatus">
+                        <option value="">Todos los Estados</option>
+                        <option value="new">Nuevo</option>
+                        <option value="contacted">Contactado</option>
+                        <option value="interested">Interesado</option>
+                        <option value="demo">Demo</option>
+                        <option value="ftd">FTD</option>
+                        <option value="lost">Perdido</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Prioridad</label>
+                    <select class="form-control" id="filterPriority">
+                        <option value="">Todas las Prioridades</option>
+                        <option value="low">Baja</option>
+                        <option value="medium">Media</option>
+                        <option value="high">Alta</option>
+                        <option value="urgent">Urgente</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Fuente</label>
+                    <select class="form-control" id="filterSource">
+                        <option value="">Todas las Fuentes</option>
+                        <option value="google_ads">Google Ads</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="organic">Orgánico</option>
+                        <option value="referral">Referidos</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Asignado a</label>
+                    <select class="form-control" id="filterAssigned">
+                        <option value="">Todos los Usuarios</option>
+                        <option value="1">María García</option>
+                        <option value="2">Carlos López</option>
+                        <option value="3">Ana Martínez</option>
+                        <option value="4">Pedro Rodríguez</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Buscar</label>
+                    <input type="text" class="form-control" id="filterSearch" placeholder="Nombre, email, teléfono...">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Fecha Desde</label>
+                    <input type="date" class="form-control" id="filterDateFrom">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Fecha Hasta</label>
+                    <input type="date" class="form-control" id="filterDateTo">
+                </div>
+                <div class="col-md-2 mb-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="LeadsModule.applyFilters()">
+                        <i class="fas fa-search me-2"></i>
+                        Filtrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estadísticas Rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary" id="totalLeads">247</h3>
+                    <p class="mb-0">Total Leads</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success" id="contactedLeads">89</h3>
+                    <p class="mb-0">Contactados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning" id="demoLeads">34</h3>
+                    <p class="mb-0">En Demo</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info" id="convertedLeads">23</h3>
+                    <p class="mb-0">Convertidos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabla de Leads -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Lista de Leads</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" onclick="LeadsModule.exportData()">
+                    <i class="fas fa-download me-1"></i>
+                    Exportar
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Acciones en lote
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="LeadsModule.bulkAssign()">Asignar en lote</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="LeadsModule.bulkStatusChange()">Cambiar estado</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="LeadsModule.bulkDelete()">Eliminar seleccionados</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table" id="leadsTable">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll"></th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Create Date</th>
+                            <th>Desk</th>
+                            <th>Último Comentario</th>
+                            <th>Last Note Date</th>
+                            <th>Last Contact Date</th>
+                            <th>Campaña</th>
+                            <th>Responsable</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody">
+                        <!-- Contenido se carga dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination justify-content-center mb-0" id="leadsPagination">
+                    <!-- Paginación se genera dinámicamente -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Importar Leads -->
+<div class="modal fade" id="importLeadsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-upload me-2"></i>
+                    Importar Leads
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Subir Archivo</h6>
+                        <div class="border rounded p-4 text-center mb-3" style="border-style: dashed !important;">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p>Arrastra tu archivo aquí o haz clic para seleccionar</p>
+                            <input type="file" class="form-control" accept=".csv,.xlsx,.xls" id="importFile">
+                            <small class="text-muted">Formatos soportados: CSV, Excel</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Mapeo de Campos</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <select class="form-control" id="mapName">
+                                <option>Seleccionar columna...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <select class="form-control" id="mapEmail">
+                                <option>Seleccionar columna...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <select class="form-control" id="mapPhone">
+                                <option>Seleccionar columna...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="LeadsModule.processImport()">Importar Leads</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Lead -->
+<div class="modal fade" id="leadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="leadModalTitle">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Nuevo Lead
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="leadForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="leadFirstName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="leadLastName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="leadEmail" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="leadPhone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">País</label>
+                            <select class="form-control" id="leadCountry">
+                                <option value="">Seleccionar país...</option>
+                                <option value="ES">España</option>
+                                <option value="MX">México</option>
+                                <option value="AR">Argentina</option>
+                                <option value="CO">Colombia</option>
+                                <option value="US">Estados Unidos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fuente</label>
+                            <select class="form-control" id="leadSource">
+                                <option value="google_ads">Google Ads</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="organic">Orgánico</option>
+                                <option value="referral">Referidos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prioridad</label>
+                            <select class="form-control" id="leadPriority">
+                                <option value="low">Baja</option>
+                                <option value="medium" selected>Media</option>
+                                <option value="high">Alta</option>
+                                <option value="urgent">Urgente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Asignar a</label>
+                            <select class="form-control" id="leadAssigned">
+                                <option value="">Sin asignar</option>
+                                <option value="1">María García</option>
+                                <option value="2">Carlos López</option>
+                                <option value="3">Ana Martínez</option>
+                                <option value="4">Pedro Rodríguez</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Notas</label>
+                            <textarea class="form-control" id="leadNotes" rows="3" placeholder="Información adicional sobre el lead..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="LeadsModule.saveLead()">Guardar Lead</button>
+            </div>
+        </div>
+    </div>
+</div>

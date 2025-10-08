@@ -1,0 +1,157 @@
+# ========================================
+# IATRADE CRM - Configuración FINAL de Producción
+# ========================================
+# INSTRUCCIONES IMPORTANTES:
+# 1. Cambiar Access-Control-Allow-Origin "*" por tu dominio real
+# 2. Después de la instalación, comentar la línea del setup_wizard.php
+# 3. Verificar que todos los módulos de Apache estén habilitados
+# ========================================
+
+RewriteEngine On
+
+# ========================================
+# HEADERS DE SEGURIDAD PARA PRODUCCIÓN
+# ========================================
+
+<IfModule mod_headers.c>
+    # Prevenir clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevenir MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Habilitar XSS protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Política de referrer más estricta
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Política de permisos
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    
+    # Remover información del servidor
+    Header unset Server
+    Header unset X-Powered-By
+</IfModule>
+
+# ========================================
+# PROTECCIÓN DE ARCHIVOS SENSIBLES
+# ========================================
+
+# Proteger archivos de configuración críticos
+<FilesMatch "\.(env|ini|log|sh|sql|conf|config|json|lock)$">
+    Require all denied
+</FilesMatch>
+
+# Proteger directorios sensibles (sin deploy para permitir setup)
+<IfModule mod_rewrite.c>
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^\.env - [F,L]
+    RewriteRule ^config/ - [F,L]
+    RewriteRule ^logs/ - [F,L]
+    RewriteRule ^database/ - [F,L]
+    RewriteRule ^vendor/ - [F,L]
+    RewriteRule ^storage/ - [F,L]
+    RewriteRule ^src/ - [F,L]
+</IfModule>
+
+# ========================================
+# OPTIMIZACIONES DE RENDIMIENTO
+# ========================================
+
+# Habilitar compresión GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Deshabilitar listado de directorios
+Options -Indexes
+
+# ========================================
+# REESCRITURA DE URLs (PRODUCCIÓN)
+# ========================================
+
+<IfModule mod_rewrite.c>
+    # Permitir acceso temporal al setup durante la instalación
+    # NOTA: Comentar o eliminar esta línea después de la instalación
+    RewriteCond %{REQUEST_URI} ^/deploy/setup_wizard\.php$
+    RewriteRule ^(.*)$ - [L]
+    
+    # Redireccionar todo lo demás al directorio public
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
+
+# ========================================
+# CONFIGURACIONES DE PRODUCCIÓN
+# ========================================
+
+# Límites optimizados para producción
+<IfModule mod_php.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 25M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+    php_value max_input_vars 3000
+</IfModule>
+
+# Cache para archivos estáticos
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>
+
+# Prevenir acceso a archivos de backup
+<FilesMatch "\.(bak|backup|old|orig|save|swp|tmp)$">
+    Require all denied
+</FilesMatch>
+
+# ========================================
+# CORS PARA API (CONFIGURACIÓN DE PRODUCCIÓN)
+# ========================================
+
+<IfModule mod_headers.c>
+    # CORS más restrictivo para producción
+    # IMPORTANTE: Cambiar "*" por tu dominio real en producción
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    Header always set Access-Control-Max-Age "86400"
+    
+    # Solo permitir credenciales si es necesario
+    Header always set Access-Control-Allow-Credentials "false"
+</IfModule>
+
+# Manejar preflight requests de forma más eficiente
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=204,L]
+</IfModule>
+
+# ========================================
+# CONFIGURACIONES ADICIONALES DE SEGURIDAD
+# ========================================
+
+# Prevenir acceso a archivos PHP en uploads
+<Directory "public/uploads">
+    <FilesMatch "\.php$">
+        Require all denied
+    </FilesMatch>
+</Directory>
+
+# Configuración de errores personalizada
+ErrorDocument 404 /public/index.php
+ErrorDocument 403 /public/index.php
+ErrorDocument 500 /public/index.php

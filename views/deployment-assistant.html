@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente de Despliegue - iaTrade CRM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border-left: 5px solid #007bff;
+            transition: transform 0.3s ease;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .status-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .status-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .status-value {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 30px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-left: 3px solid #00ff00;
+            padding-left: 10px;
+        }
+        
+        .log-entry.error {
+            border-left-color: #ff4444;
+            color: #ff4444;
+        }
+        
+        .log-entry.warning {
+            border-left-color: #ffaa00;
+            color: #ffaa00;
+        }
+        
+        .changes-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .change-type {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .change-new {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .change-modified {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+        
+        .change-deleted {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        }
+        
+        .change-count {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .change-label {
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff 0%, #28a745 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Asistente de Despliegue</h1>
+            <p>Sistema Inteligente de Sincronización - iaTrade CRM</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Estado del Sistema -->
+            <div class="status-grid">
+                <div class="status-card">
+                    <h3>📁 Entorno de Desarrollo</h3>
+                    <div class="status-info">
+                        <span>Ruta:</span>
+                        <span class="status-value" id="dev-path">Cargando...</span>
+                    </div>
+                    <div class="status-info">
+                        <span>Estado:</span>
+                        <span class="status-badge" id="dev-status">Verificando...</span>
+                    </div>
+                    <div class="status-info">
+                        <span>Base de Datos:</span>
+                        <span class="status-badge" id="dev-db-status">Verificando...</span>
+                    </div>
+                </div>
+                
+                <div class="status-card">
+                    <h3>🌐 Entorno de Producción</h3>
+                    <div class="status-info">
+                        <span>URL:</span>
+                        <span class="status-value" id="prod-url">Cargando...</span>
+                    </div>
+                    <div class="status-info">
+                        <span>Estado:</span>
+                        <span class="status-badge" id="prod-status">Verificando...</span>
+                    </div>
+                    <div class="status-info">
+                        <span>Base de Datos:</span>
+                        <span class="status-badge" id="prod-db-status">Verificando...</span>
+                    </div>
+                </div>
+                
+                <div class="status-card">
+                    <h3>🔄 Última Sincronización</h3>
+                    <div class="status-info">
+                        <span>Fecha:</span>
+                        <span class="status-value" id="last-sync">Nunca</span>
+                    </div>
+                    <div class="status-info">
+                        <span>Estado:</span>
+                        <span class="status-badge" id="sync-status">Pendiente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resumen de Cambios -->
+            <div class="changes-summary" id="changes-summary" style="display: none;">
+                <div class="change-type change-new">
+                    <div class="change-count" id="new-count">0</div>
+                    <div class="change-label">Nuevos</div>
+                </div>
+                <div class="change-type change-modified">
+                    <div class="change-count" id="modified-count">0</div>
+                    <div class="change-label">Modificados</div>
+                </div>
+                <div class="change-type change-deleted">
+                    <div class="change-count" id="deleted-count">0</div>
+                    <div class="change-label">Eliminados</div>
+                </div>
+            </div>
+            
+            <!-- Botones de Acción -->
+            <div class="action-buttons">
+                <button class="btn btn-info" onclick="detectChanges()">
+                    🔍 Detectar Cambios
+                </button>
+                <button class="btn btn-warning" onclick="generateReport()">
+                    📊 Generar Reporte
+                </button>
+                <button class="btn btn-success" onclick="syncToProduction()" id="sync-btn" disabled>
+                    🚀 Sincronizar a Producción
+                </button>
+                <button class="btn btn-primary" onclick="openProduction()">
+                    🌐 Abrir Producción
+                </button>
+            </div>
+            
+            <!-- Barra de Progreso -->
+            <div class="progress-bar hidden" id="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            
+            <!-- Spinner de Carga -->
+            <div class="spinner hidden" id="loading-spinner"></div>
+            
+            <!-- Alertas -->
+            <div id="alerts-container"></div>
+            
+            <!-- Log de Actividad -->
+            <div class="log-container" id="log-container">
+                <div class="log-entry">🎯 Sistema de despliegue inicializado</div>
+                <div class="log-entry">📋 Listo para detectar cambios...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentChanges = null;
+        
+        function showAlert(message, type = 'info') {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertsContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        function addLogEntry(message, type = 'info') {
+            const logContainer = document.getElementById('log-container');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function showLoading(show = true) {
+            const spinner = document.getElementById('loading-spinner');
+            if (show) {
+                spinner.classList.remove('hidden');
+            } else {
+                spinner.classList.add('hidden');
+            }
+        }
+        
+        function updateProgress(percentage) {
+            const progressBar = document.getElementById('progress-bar');
+            const progressFill = document.getElementById('progress-fill');
+            
+            if (percentage > 0) {
+                progressBar.classList.remove('hidden');
+                progressFill.style.width = percentage + '%';
+            } else {
+                progressBar.classList.add('hidden');
+            }
+        }
+        
+        // Cargar estado inicial al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemStatus();
+        });
+        
+        async function loadSystemStatus() {
+            addLogEntry('🔍 Cargando estado del sistema...');
+            
+            try {
+                const response = await fetch('?api=status');
+                const status = await response.json();
+                
+                if (status.error) {
+                    throw new Error(status.message);
+                }
+                
+                // Actualizar información de desarrollo
+                document.getElementById('dev-path').textContent = status.environments.development.path;
+                updateStatusBadge('dev-status', status.environments.development.status);
+                updateDatabaseStatus('dev-db-status', status.environments.development.database);
+                
+                // Actualizar información de producción
+                document.getElementById('prod-url').textContent = status.environments.production.url;
+                updateStatusBadge('prod-status', status.environments.production.status);
+                updateDatabaseStatus('prod-db-status', status.environments.production.database);
+                
+                // Actualizar última sincronización
+                document.getElementById('last-sync').textContent = status.last_sync;
+                
+                addLogEntry('✅ Estado del sistema cargado correctamente', 'success');
+                
+            } catch (error) {
+                addLogEntry(`❌ Error cargando estado: ${error.message}`, 'error');
+                showAlert('Error al cargar el estado del sistema', 'danger');
+            }
+        }
+        
+        function updateStatusBadge(elementId, status) {
+            const element = document.getElementById(elementId);
+            element.className = 'status-badge';
+            
+            switch (status) {
+                case 'active':
+                case 'ready':
+                    element.classList.add('active');
+                    element.textContent = '✅ Activo';
+                    break;
+                case 'inactive':
+                case 'not_created':
+                    element.classList.add('error');
+                    element.textContent = '❌ Inactivo';
+                    break;
+                case 'incomplete':
+                    element.classList.add('warning');
+                    element.textContent = '⚠️ Incompleto';
+                    break;
+                default:
+                    element.classList.add('pending');
+                    element.textContent = '⏳ Desconocido';
+            }
+        }
+        
+        function updateDatabaseStatus(elementId, dbInfo) {
+            const element = document.getElementById(elementId);
+            element.className = 'status-badge';
+            
+            if (dbInfo.status === 'connected') {
+                element.classList.add('active');
+                element.textContent = `✅ Conectado (${dbInfo.database})`;
+                element.title = `Host: ${dbInfo.host}`;
+            } else {
+                element.classList.add('error');
+                element.textContent = '❌ Desconectado';
+                element.title = dbInfo.error || 'Error de conexión';
+            }
+        }
+         
+         async function detectChanges() {
+             addLogEntry('🔍 Iniciando detección de cambios...');
+             showLoading(true);
+             
+             try {
+                const response = await fetch('?api=detect');
+                const changes = await response.json();
+                
+                currentChanges = changes;
+                
+                // Actualizar resumen de cambios
+                document.getElementById('new-count').textContent = changes.new.length;
+                document.getElementById('modified-count').textContent = changes.modified.length;
+                document.getElementById('deleted-count').textContent = changes.deleted.length;
+                document.getElementById('changes-summary').style.display = 'grid';
+                
+                const totalChanges = changes.new.length + changes.modified.length + changes.deleted.length;
+                
+                if (totalChanges > 0) {
+                    document.getElementById('sync-btn').disabled = false;
+                    addLogEntry(`✅ Detectados ${totalChanges} cambios`, 'success');
+                    showAlert(`Se detectaron ${totalChanges} cambios pendientes de sincronización`, 'info');
+                } else {
+                    addLogEntry('✅ No se detectaron cambios', 'success');
+                    showAlert('El entorno de producción está actualizado', 'success');
+                }
+                
+                // Mostrar detalles de cambios
+                if (changes.new.length > 0) {
+                    addLogEntry(`📄 Archivos nuevos: ${changes.new.join(', ')}`);
+                }
+                if (changes.modified.length > 0) {
+                    addLogEntry(`✏️ Archivos modificados: ${changes.modified.join(', ')}`);
+                }
+                if (changes.deleted.length > 0) {
+                    addLogEntry(`🗑️ Archivos eliminados: ${changes.deleted.join(', ')}`);
+                }
+                
+            } catch (error) {
+                addLogEntry(`❌ Error detectando cambios: ${error.message}`, 'error');
+                showAlert('Error al detectar cambios', 'danger');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function syncToProduction() {
+            if (!currentChanges) {
+                showAlert('Primero debes detectar los cambios', 'warning');
+                return;
+            }
+            
+            const totalChanges = currentChanges.new.length + currentChanges.modified.length + currentChanges.deleted.length;
+            
+            if (!confirm(`¿Estás seguro de sincronizar ${totalChanges} cambios a producción?`)) {
+                return;
+            }
+            
+            addLogEntry('🚀 Iniciando sincronización a producción...');
+            showLoading(true);
+            updateProgress(10);
+            
+            try {
+                const response = await fetch('?api=sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentChanges)
+                });
+                
+                updateProgress(50);
+                const result = await response.json();
+                updateProgress(80);
+                
+                if (result.synced !== undefined) {
+                    addLogEntry(`✅ Sincronización completada: ${result.synced} archivos sincronizados`, 'success');
+                    
+                    if (result.errors > 0) {
+                        addLogEntry(`⚠️ Se encontraron ${result.errors} errores durante la sincronización`, 'warning');
+                        showAlert(`Sincronización completada con ${result.errors} errores`, 'warning');
+                    } else {
+                        showAlert('Sincronización completada exitosamente', 'success');
+                    }
+                    
+                    // Actualizar estado
+                    document.getElementById('last-sync').textContent = new Date().toLocaleString();
+                    document.getElementById('sync-status').textContent = '✅ Completado';
+                    document.getElementById('sync-status').style.color = '#28a745';
+                    
+                    // Limpiar cambios
+                    currentChanges = null;
+                    document.getElementById('sync-btn').disabled = true;
+                    document.getElementById('changes-summary').style.display = 'none';
+                }
+                
+                updateProgress(100);
+                setTimeout(() => updateProgress(0), 2000);
+                
+            } catch (error) {
+                addLogEntry(`❌ Error en sincronización: ${error.message}`, 'error');
+                showAlert('Error durante la sincronización', 'danger');
+                updateProgress(0);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function generateReport() {
+            addLogEntry('📊 Generando reporte de estado...');
+            showLoading(true);
+            
+            try {
+                const response = await fetch('?api=status');
+                const report = await response.json();
+                
+                addLogEntry('✅ Reporte generado exitosamente');
+                
+                // Mostrar información del reporte
+                addLogEntry(`📈 Total de cambios pendientes: ${report.total_changes}`);
+                addLogEntry(`🕒 Última verificación: ${report.timestamp}`);
+                addLogEntry(`🌐 URL de producción: ${report.production_config.url}`);
+                addLogEntry(`💾 Base de datos: ${report.production_config.database}`);
+                
+                showAlert('Reporte generado - revisa el log para detalles', 'info');
+                
+            } catch (error) {
+                addLogEntry(`❌ Error generando reporte: ${error.message}`, 'error');
+                showAlert('Error al generar el reporte', 'danger');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function openProduction() {
+            window.open('https://spin2pay.com', '_blank');
+            addLogEntry('🌐 Abriendo entorno de producción...');
+        }
+        
+        // Auto-detectar cambios al cargar la página
+        window.addEventListener('load', function() {
+            setTimeout(detectChanges, 1000);
+        });
+        
+        // Auto-refresh cada 5 minutos
+        setInterval(function() {
+            if (!document.getElementById('loading-spinner').classList.contains('hidden')) {
+                return; // No auto-refresh si hay una operación en curso
+            }
+            
+            addLogEntry('🔄 Verificación automática de cambios...');
+            detectChanges();
+        }, 300000); // 5 minutos
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - /bin/mkdir -p $HOME/public_html/storage/logs $HOME/public_html/uploads
+    - /bin/chmod -R 775 $HOME/public_html/storage $HOME/public_html/storage/logs $HOME/public_html/uploads
+    - if [ -x /usr/local/bin/composer ]; then cd $HOME/public_html && /usr/local/bin/composer install --no-dev --prefer-dist; fi

@@ -1,0 +1,14 @@
+<IfModule mod_authz_core.c>
+  Require all granted
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Allow from all
+</IfModule>
+
+# Tipos MIME explícitos
+AddType text/css .css
+AddType application/javascript .js
+
+# Evitar listado de directorios en /assets
+Options -Indexes

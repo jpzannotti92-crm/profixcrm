@@ -1,0 +1,384 @@
+<?php
+
+// Configurar bypass de platform check para desarrollo
+require_once __DIR__ . '/../platform_check_bypass.php';
+
+// Configurar autoload de Composer con rutas robustas (soporta docroot en /public_html)
+$autoloadCandidates = [
+    __DIR__ . '/../vendor/autoload.php', // estructura proyecto típica
+    __DIR__ . '/vendor/autoload.php',    // vendor dentro de docroot
+];
+foreach ($autoloadCandidates as $autoload) {
+    if (file_exists($autoload)) {
+        require_once $autoload;
+        break;
+    }
+}
+
+// Cargar variables de entorno
+// Cargar variables de entorno desde .env o .env.production en rutas alternativas
+$envRootCandidates = [
+    __DIR__ . '/..', // proyecto raíz
+    __DIR__,         // docroot
+];
+foreach ($envRootCandidates as $envRoot) {
+    if (file_exists($envRoot . '/.env') || file_exists($envRoot . '/.env.production')) {
+        if (class_exists('Dotenv\\Dotenv')) {
+            $dotenv = Dotenv\Dotenv::createMutable($envRoot);
+            if (file_exists($envRoot . '/.env')) {
+                if (method_exists($dotenv, 'overload')) { $dotenv->overload(); } else { $dotenv->load(); }
+            } else {
+                // Cargar .env.production manualmente si no hay .env
+                $lines = @file($envRoot . '/.env.production', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                if (is_array($lines)) {
+                    foreach ($lines as $line) {
+                        if (strpos(ltrim($line), '#') === 0) { continue; }
+                        $parts = explode('=', $line, 2);
+                        if (count($parts) === 2) {
+                            $k = trim($parts[0]);
+                            $v = trim($parts[1], " \t\n\r\0\x0B\"'" );
+                            $_ENV[$k] = $v; putenv("$k=$v");
+                        }
+                    }
+                }
+            }
+        }
+        break;
+    }
+}
+
+// Configurar headers CORS (compatibles con credenciales)
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if ($origin) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: *');
+}
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Auth-Token');
+
+// Manejar preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Obtener la URI solicitada
+$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// =====================================================
+// API ENDPOINTS - PRIMERA PRIORIDAD
+// =====================================================
+
+// API Health Check
+if ($requestUri === '/api/health' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (file_exists(__DIR__ . '/api/health.php')) {
+        include __DIR__ . '/api/health.php';
+    } else {
+        header('Content-Type: application/json');
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Health endpoint no disponible'
+        ]);
+    }
+    exit;
+}
+
+// API de autenticación
+if (($requestUri === '/api/auth/login' || $requestUri === '/api/auth/login.php') && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+    if (file_exists(__DIR__ . '/api/auth/login.php')) {
+        include __DIR__ . '/api/auth/login.php';
+    } else {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Login API no disponible'
+        ]);
+    }
+    exit;
+}
+
+if ($requestUri === '/api/auth/verify' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+    
+    // Verificación simple de token
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (!empty($authHeader) && strpos($authHeader, 'Bearer ') === 0) {
+        echo json_encode(['valid' => true]);
+    } else {
+        echo json_encode(['valid' => false]);
+    }
+    exit;
+}
+
+// API de dashboard
+if ($requestUri === '/api/dashboard' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Content-Type: application/json');
+    if (file_exists(__DIR__ . '/api/dashboard.php')) {
+        include __DIR__ . '/api/dashboard.php';
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Dashboard API no disponible'
+        ]);
+    }
+    exit;
+}
+
+// API de leads
+if (strpos($requestUri, '/api/leads') === 0) {
+    header('Content-Type: application/json');
+    if (file_exists(__DIR__ . '/api/leads.php')) {
+        include __DIR__ . '/api/leads.php';
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Leads API no disponible'
+        ]);
+    }
+    exit;
+}
+
+// API de actividades de leads
+if (strpos($requestUri, '/api/lead_activities') === 0) {
+    header('Content-Type: ' . 'application/json');
+    if (file_exists(__DIR__ . '/api/lead_activities.php')) {
+        include __DIR__ . '/api/lead_activities.php';
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Lead Activities API no disponible'
+        ]);
+    }
+    exit;
+}
+
+// API de usuarios
+if (strpos($requestUri, '/api/users') === 0) {
+    header('Content-Type: application/json');
+    if (file_exists(__DIR__ . '/api/users.php')) {
+        include __DIR__ . '/api/users.php';
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Users API no disponible'
+        ]);
+    }
+    exit;
+}
+
+// API de roles
+if (strpos($requestUri, '/api/roles') === 0) {
+    header('Content-Type: application/json');
+    if (file_exists(__DIR__ . '/api/roles.php')) {
+        include __DIR__ . '/api/roles.php';
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Roles API no disponible'
+        ]);
+    }
+    exit;
+}
+
+// API de mesas
+if (strpos($requestUri, '/api/desks') === 0) {
+    header('Content-Type: application/json');
+    if (file_exists(__DIR__ . '/api/desks.php')) {
+        include __DIR__ . '/api/desks.php';
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Desks API no disponible'
+        ]);
+    }
+    exit;
+}
+
+// API de configuración
+if ($requestUri === '/api/config' || $requestUri === '/api/config.php') {
+    if (file_exists(__DIR__ . '/api/config.php')) {
+        include __DIR__ . '/api/config.php';
+    } else {
+        header('Content-Type: application/json');
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Config endpoint not found']);
+    }
+    exit;
+}
+
+// Endpoint API no encontrado
+if (strpos($requestUri, '/api/') === 0) {
+    header('Content-Type: application/json');
+    http_response_code(404);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Endpoint no encontrado',
+        'requested_uri' => $requestUri,
+        'method' => $_SERVER['REQUEST_METHOD']
+    ]);
+    exit;
+}
+
+// =====================================================
+// COMPAT: ENDPOINTS SIN PREFIJO /api (soporte legacy)
+// =====================================================
+$pathOnly = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$compatMap = [
+    '/leads_simple.php' => '/api/leads_simple.php',
+    '/leads.php' => '/api/leads.php',
+    '/trading-accounts.php' => '/api/trading-accounts.php',
+    '/dashboard.php' => '/api/dashboard.php',
+    '/lead-trading-link.php' => '/api/lead-trading-link.php',
+    '/deposits-withdrawals.php' => '/api/deposits-withdrawals.php',
+    '/employee-stats.php' => '/api/employee-stats.php',
+    '/employee-activities.php' => '/api/employee-activities.php',
+    '/users.php' => '/api/users.php',
+    '/roles.php' => '/api/roles.php',
+    '/desks.php' => '/api/desks.php',
+    '/lead-import.php' => '/api/lead-import.php',
+    '/user-permissions.php' => '/api/user-permissions.php',
+];
+if (isset($compatMap[$pathOnly])) {
+    header('Content-Type: application/json');
+    $target = __DIR__ . $compatMap[$pathOnly];
+    if (file_exists($target)) {
+        include $target;
+    } else {
+        http_response_code(404);
+        echo json_encode(['success'=>false,'message'=>'Endpoint no disponible', 'mapped_to'=>$compatMap[$pathOnly]]);
+    }
+    exit;
+}
+
+// =====================================================
+// RUTAS DE PÁGINAS
+// =====================================================
+
+// Cargar configuración dinámica
+require_once __DIR__ . '/../src/Core/Config.php';
+use IaTradeCRM\Core\Config;
+
+$appConfig = Config::getInstance();
+$loginUrl = $appConfig->getLoginUrl();
+// Detectar base URL (soporta subcarpetas como /profixcrm)
+$baseUrl = method_exists($appConfig, 'getBaseUrl') ? $appConfig->getBaseUrl() : '';
+
+// Página principal: redirigir al login del SPA
+if ($requestUri === '/' || $requestUri === '/index.php' || $requestUri === '/public/' || $requestUri === '/public/index.php') {
+    // Detectar entorno local: usar siempre React Dev Server en 3000
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    if (preg_match('/localhost|127\.0\.0\.1/', $host)) {
+        $redirectUrl = $protocol . '://localhost:3000/auth/login';
+    } else {
+        // Producción/subcarpeta: usar SPA con hash router en raíz
+        $redirectUrl = rtrim($baseUrl ?: ($protocol . '://' . $host), '/') . '/#/auth/login';
+    }
+// REDIRECCIÓN TEMPORALMENTE DESACTIVADA - // REDIRECCIÓN TEMPORALMENTE DESACTIVADA -     header('Location: ' . $redirectUrl);
+    exit;
+}
+
+// Página de login (SPA)
+if ($requestUri === '/auth/login' || $requestUri === '/public/auth/login') {
+    include __DIR__ . '/index.html';
+    exit;
+}
+
+// Compat: /login -> redirigir a /auth/login (SPA)
+if ($requestUri === '/login' || $requestUri === '/login.html' || $requestUri === '/public/login' || $requestUri === '/public/login.html') {
+// REDIRECCIÓN TEMPORALMENTE DESACTIVADA - // REDIRECCIÓN TEMPORALMENTE DESACTIVADA -     header('Location: /auth/login');
+    exit;
+}
+
+// Dashboard principal (requiere autenticación básica)
+if ($requestUri === '/premium.html' || $requestUri === '/dashboard') {
+    // Verificación básica de token (simplificada)
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $hasValidToken = !empty($authHeader) && strpos($authHeader, 'Bearer ') === 0;
+    
+    if (!$hasValidToken) {
+// REDIRECCIÓN TEMPORALMENTE DESACTIVADA - // REDIRECCIÓN TEMPORALMENTE DESACTIVADA -         header('Location: /auth/login');
+        exit;
+    }
+    
+    include __DIR__ . '/premium.html';
+    exit;
+}
+
+// =====================================================
+// ARCHIVOS ESTÁTICOS
+// =====================================================
+
+// CSS, JS, imágenes, etc.
+if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $requestUri)) {
+    $filePath = __DIR__ . $requestUri;
+    if (file_exists($filePath)) {
+        $mimeTypes = [
+            'css' => 'text/css',
+            'js' => 'application/javascript',
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'ico' => 'image/x-icon',
+            'svg' => 'image/svg+xml',
+            'woff' => 'font/woff',
+            'woff2' => 'font/woff2',
+            'ttf' => 'font/ttf',
+            'eot' => 'application/vnd.ms-fontobject'
+        ];
+        
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+        $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+        
+        header('Content-Type: ' . $mimeType);
+        header('Cache-Control: public, max-age=31536000');
+        readfile($filePath);
+        exit;
+    }
+}
+
+// HTML files
+if (preg_match('/\.html$/', $requestUri)) {
+    $filePath = __DIR__ . $requestUri;
+    if (file_exists($filePath)) {
+        header('Content-Type: text/html');
+        include $filePath;
+        exit;
+    }
+}
+
+// PHP files
+if (preg_match('/\.php$/', $requestUri)) {
+    $filePath = __DIR__ . $requestUri;
+    if (file_exists($filePath)) {
+        include $filePath;
+        exit;
+    }
+}
+
+// =====================================================
+// 404 - PÁGINA NO ENCONTRADA
+// =====================================================
+http_response_code(404);
+echo '<h1>404 - Página no encontrada</h1>';
+echo '<p>La página solicitada no existe.</p>';
+echo '<p>URI solicitada: ' . htmlspecialchars($requestUri) . '</p>';
+// Detectar URL base dinámicamente
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$baseUrl = $protocol . '://' . $host;
+
+// Si estamos en desarrollo local, usar dev server
+if (preg_match('/localhost|127\.0\.0\.1/', $host)) {
+    $loginUrl = $protocol . '://localhost:3000/auth/login';
+} else {
+    // Producción: build React bajo /assets con hash router
+    $loginUrl = rtrim($baseUrl, '/') . '/assets/#/auth/login';
+}
+echo '<a href="' . htmlspecialchars($loginUrl) . '">Ir al Login</a>';
+exit;

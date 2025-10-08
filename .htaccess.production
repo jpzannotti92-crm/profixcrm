@@ -1,0 +1,16 @@
+# iaTrade CRM - .htaccess de producción para raíz en public_html
+# Ubicación: subir este archivo como .htaccess en public_html
+
+Options -Indexes
+
+# Prioriza el front controller de producción dentro de /public
+DirectoryIndex public/index.production.php public/index.php index.php index.html
+
+RewriteEngine On
+
+# Envía todo al directorio /public SIN redirección externa (evita 404 por caché)
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]
+
+# Si tu hosting requiere rutas absolutas, usa la alternativa:
+# RewriteRule ^(.*)$ /public/$1 [L]

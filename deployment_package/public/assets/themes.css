@@ -1,0 +1,549 @@
+/**
+ * Sistema de Temas CRM Forex/CFD
+ * Paleta profesional: Azul oscuro y blanco
+ */
+
+/* Variables CSS por defecto (tema claro) */
+:root {
+    /* Colores principales */
+    --color-primary: #1e3a8a;
+    --color-primary-dark: #1e40af;
+    --color-primary-light: #3b82f6;
+    --color-secondary: #64748b;
+    
+    /* Colores de fondo */
+    --color-background: #ffffff;
+    --color-background-secondary: #f8fafc;
+    --color-background-tertiary: #f1f5f9;
+    
+    /* Colores de superficie */
+    --color-surface: #ffffff;
+    --color-surface-elevated: #ffffff;
+    
+    /* Colores de texto */
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94a3b8;
+    --color-text-inverse: #ffffff;
+    
+    /* Colores de estado */
+    --color-success: #059669;
+    --color-warning: #d97706;
+    --color-danger: #dc2626;
+    --color-info: #0284c7;
+    
+    /* Colores de borde */
+    --color-border: #e2e8f0;
+    --color-border-light: #f1f5f9;
+    --color-border-dark: #cbd5e1;
+    
+    /* Colores específicos Forex */
+    --color-profit: #059669;
+    --color-loss: #dc2626;
+    --color-neutral: #64748b;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    
+    /* Transiciones */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* Tema oscuro */
+.theme-dark {
+    /* Colores principales */
+    --color-primary: #3b82f6;
+    --color-primary-dark: #2563eb;
+    --color-primary-light: #60a5fa;
+    --color-secondary: #94a3b8;
+    
+    /* Colores de fondo */
+    --color-background: #0f172a;
+    --color-background-secondary: #1e293b;
+    --color-background-tertiary: #334155;
+    
+    /* Colores de superficie */
+    --color-surface: #1e293b;
+    --color-surface-elevated: #334155;
+    
+    /* Colores de texto */
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-text-inverse: #0f172a;
+    
+    /* Colores de estado */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #06b6d4;
+    
+    /* Colores de borde */
+    --color-border: #475569;
+    --color-border-light: #64748b;
+    --color-border-dark: #334155;
+    
+    /* Colores específicos Forex */
+    --color-profit: #10b981;
+    --color-loss: #ef4444;
+    --color-neutral: #94a3b8;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+/* Estilos base del body */
+body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+/* Botón de cambio de tema */
+.theme-toggle {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.theme-toggle:hover {
+    background-color: var(--color-background-secondary);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.theme-toggle:active {
+    transform: translateY(0);
+}
+
+.theme-toggle i {
+    font-size: 1rem;
+}
+
+/* Cards y superficies */
+.card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-header {
+    background-color: var(--color-background-secondary);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.card-footer {
+    background-color: var(--color-background-secondary);
+    border-top: 1px solid var(--color-border);
+}
+
+/* Navegación */
+.navbar {
+    background-color: var(--color-surface) !important;
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.navbar-brand {
+    color: var(--color-primary) !important;
+    font-weight: 700;
+}
+
+.nav-link {
+    color: var(--color-text-secondary) !important;
+    transition: color var(--transition-fast);
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--color-primary) !important;
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.sidebar-nav .nav-link {
+    color: var(--color-text-secondary);
+    border-radius: 8px;
+    margin: 2px 8px;
+    transition: all var(--transition-fast);
+}
+
+.sidebar-nav .nav-link:hover {
+    background-color: var(--color-background-secondary);
+    color: var(--color-primary);
+}
+
+.sidebar-nav .nav-link.active {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+/* Tablas */
+.table {
+    color: var(--color-text-primary);
+    background-color: var(--color-surface);
+}
+
+.table th {
+    background-color: var(--color-background-secondary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.table td {
+    border-color: var(--color-border);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--color-background-secondary);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--color-background-tertiary);
+}
+
+/* Formularios */
+.form-control {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+}
+
+.form-control:focus {
+    background-color: var(--color-surface);
+    border-color: var(--color-primary);
+    color: var(--color-text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--color-text-muted);
+}
+
+.form-label {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.form-select {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+/* Botones */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-outline-primary {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+.btn-secondary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: var(--color-text-inverse);
+}
+
+.btn-success {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.btn-warning {
+    background-color: var(--color-warning);
+    border-color: var(--color-warning);
+}
+
+.btn-danger {
+    background-color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+.btn-info {
+    background-color: var(--color-info);
+    border-color: var(--color-info);
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+}
+
+.badge.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--color-success) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--color-warning) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--color-danger) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--color-info) !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--color-secondary) !important;
+}
+
+/* Modales */
+.modal-content {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--color-border);
+}
+
+.modal-backdrop {
+    background-color: rgba(15, 23, 42, 0.5);
+}
+
+/* Dropdowns */
+.dropdown-menu {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background-color: var(--color-background-secondary);
+    color: var(--color-primary);
+}
+
+/* Alertas */
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.alert-primary {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--color-primary);
+    border-left: 4px solid var(--color-primary);
+}
+
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+    border-left: 4px solid var(--color-success);
+}
+
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+    border-left: 4px solid var(--color-warning);
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+    border-left: 4px solid var(--color-danger);
+}
+
+/* Widgets específicos Forex */
+.forex-widget {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.forex-widget:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.profit-indicator {
+    color: var(--color-profit);
+    font-weight: 600;
+}
+
+.loss-indicator {
+    color: var(--color-loss);
+    font-weight: 600;
+}
+
+.neutral-indicator {
+    color: var(--color-neutral);
+    font-weight: 500;
+}
+
+/* Gráficos y métricas */
+.metric-card {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    color: var(--color-text-inverse);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-fast);
+}
+
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Scrollbars personalizados */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border-dark);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-secondary);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .theme-toggle span {
+        display: none !important;
+    }
+    
+    .forex-widget {
+        padding: 16px;
+    }
+    
+    .metric-card {
+        padding: 20px;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+    }
+}
+
+/* Estados de carga */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.skeleton {
+    background: linear-gradient(90deg, var(--color-background-secondary) 25%, var(--color-background-tertiary) 50%, var(--color-background-secondary) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}

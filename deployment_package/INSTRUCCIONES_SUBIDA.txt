@@ -1,0 +1,41 @@
+🚀 INSTRUCCIONES DE SUBIDA - PROFIXCRM V8
+=====================================
+
+📋 PASOS PARA SUBIR A PRODUCCIÓN:
+
+1️⃣  SUBIR ARCHIVOS
+   • Sube TODO el contenido de este paquete a tu servidor
+   • Mantén la estructura de carpetas intacta
+   • El directorio raíz debe contener index.php
+
+2️⃣  CONFIGURAR PERMISOS (IMPORTANTE)
+   chmod 755 -R logs/
+   chmod 755 -R storage/
+   chmod 755 -R temp/
+   chmod 755 -R cache/
+   chmod 644 config/v8_config.php
+
+3️⃣  CONFIGURAR BASE DE DATOS
+   • Crea una base de datos MySQL
+   • Actualiza config/v8_config.php con tus credenciales
+   • Importa tu respaldo de la versión V7 si aplica
+
+4️⃣  VALIDAR INSTALACIÓN
+   • Accede a: https://tudominio.com/validate_v8.php
+   • Debe mostrar "VALIDACIÓN COMPLETADA"
+   • Si hay errores, corrígelos antes de continuar
+
+5️⃣  ACTIVAR MODO PRODUCCIÓN
+   • En config/v8_config.php cambia APP_ENV=production
+   • Desactiva el modo debug
+
+⚠️  ARCHIVOS IMPORTANTES:
+   • validate_v8.php → Para validar tu instalación
+   • deploy_v8.php → Para ejecutar migraciones
+   • config/v8_config.php → Configuración principal
+
+📞 EN CASO DE PROBLEMAS:
+   1. Verifica los logs en logs/v8/
+   2. Ejecuta validate_v8.php para diagnosticar
+   3. Revisa los permisos de carpetas
+   4. Contacta soporte técnico
