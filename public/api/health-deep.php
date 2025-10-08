@@ -114,6 +114,27 @@ foreach ($requiredEnv as $k) {
 }
 $checks['env_loaded'] = ($envPresent >= 3);
 
+// Si no cargó el entorno, intentar poblar desde constantes de config.php
+if (!$checks['env_loaded']) {
+    if (defined('DB_HOST')) { $_ENV['DB_HOST'] = DB_HOST; @putenv('DB_HOST=' . DB_HOST); }
+    if (defined('DB_PORT')) { $_ENV['DB_PORT'] = DB_PORT; @putenv('DB_PORT=' . DB_PORT); }
+    if (defined('DB_NAME')) { $_ENV['DB_DATABASE'] = DB_NAME; $_ENV['DB_NAME'] = DB_NAME; @putenv('DB_DATABASE=' . DB_NAME); @putenv('DB_NAME=' . DB_NAME); }
+    if (defined('DB_USER')) { $_ENV['DB_USERNAME'] = DB_USER; $_ENV['DB_USER'] = DB_USER; @putenv('DB_USERNAME=' . DB_USER); @putenv('DB_USER=' . DB_USER); }
+    if (defined('DB_PASS')) { $_ENV['DB_PASSWORD'] = DB_PASS; $_ENV['DB_PASS'] = DB_PASS; @putenv('DB_PASSWORD=' . DB_PASS); @putenv('DB_PASS=' . DB_PASS); }
+    // Recalcular
+    $envPresent = 0;
+    foreach ($requiredEnv as $k) {
+        if ($k === 'DB_DATABASE') {
+            $hasDbName = (getenv('DB_DATABASE') !== false) || isset($_ENV['DB_DATABASE'])
+                || (getenv('DB_NAME') !== false) || isset($_ENV['DB_NAME']);
+            if ($hasDbName) { $envPresent++; }
+        } else {
+            if (getenv($k) !== false || isset($_ENV[$k])) { $envPresent++; }
+        }
+    }
+    $checks['env_loaded'] = ($envPresent >= 3);
+}
+
 // Paths y permisos relativos al root del proyecto
 $root = realpath(__DIR__ . '/../../');
 $storage = $root . '/storage';

@@ -55,6 +55,43 @@ jobs:
               printf "$_ENV['%s']='%s'; putenv('%s=%s');\n" "$key" "$val" "$key" "$val" >> env.php
             done < .env.production
             echo "?>" >> env.php
+
+            # Re-escribir config/config.php con credenciales de producción (fallback)
+            DB_HOST=$(grep -E "^DB_HOST=" .env.production | cut -d '=' -f2- | tr -d "'\"")
+            DB_PORT=$(grep -E "^DB_PORT=" .env.production | cut -d '=' -f2- | tr -d "'\"")
+            DB_NAME=$(grep -E "^(DB_DATABASE|DB_NAME)=" .env.production | head -n1 | cut -d '=' -f2- | tr -d "'\"")
+            DB_USER=$(grep -E "^(DB_USERNAME|DB_USER)=" .env.production | head -n1 | cut -d '=' -f2- | tr -d "'\"")
+            DB_PASS=$(grep -E "^(DB_PASSWORD|DB_PASS)=" .env.production | head -n1 | cut -d '=' -f2- | tr -d "'\"")
+            mkdir -p config
+            cat > config/config.php <<PHP
+<?php
+return [
+    'database' => [
+        'host' => '${DB_HOST:-localhost}',
+        'port' => '${DB_PORT:-3306}',
+        'name' => '${DB_NAME:-profixcrm}',
+        'username' => '${DB_USER:-root}',
+        'password' => '${DB_PASS:-}',
+        'charset' => 'utf8mb4',
+        'collation' => 'utf8mb4_unicode_ci'
+    ],
+    'app' => [
+        'name' => 'iaTrade CRM',
+        'url' => 'https://spin2pay.com',
+        'env' => 'production',
+        'debug' => false,
+        'timezone' => 'America/Mexico_City'
+    ],
+    'security' => [
+        'key' => 'auto',
+        'jwt_secret' => 'auto',
+        'session_lifetime' => 120,
+        'password_min_length' => 8
+    ]
+];
+require_once __DIR__ . '/constants.php';
+?>
+PHP
           else
             echo "ENV_PRODUCTION secret is empty or not set" && exit 1
           fi

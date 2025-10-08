@@ -34,14 +34,14 @@ class Connection
                     }
                 }
             }
-            $host = $_ENV['DB_HOST'] ?? 'localhost';
-            $port = $_ENV['DB_PORT'] ?? '3306';
+            $host = (defined('DB_HOST') ? DB_HOST : ($_ENV['DB_HOST'] ?? 'localhost'));
+            $port = (defined('DB_PORT') ? DB_PORT : ($_ENV['DB_PORT'] ?? '3306'));
             // Admitir tanto DB_DATABASE como DB_NAME para compatibilidad con distintos .env
             // Fallback actualizado: spin2pay_profixcrm
-            $dbname = $_ENV['DB_DATABASE'] ?? ($_ENV['DB_NAME'] ?? 'spin2pay_profixcrm');
-            // Admitir alias DB_USER
-            $username = $_ENV['DB_USERNAME'] ?? ($_ENV['DB_USER'] ?? 'root');
-            $password = $_ENV['DB_PASSWORD'] ?? '';
+            $dbname = (defined('DB_NAME') ? DB_NAME : ($_ENV['DB_DATABASE'] ?? ($_ENV['DB_NAME'] ?? 'spin2pay_profixcrm')));
+            // Admitir alias DB_USER y constantes
+            $username = (defined('DB_USER') ? DB_USER : ($_ENV['DB_USERNAME'] ?? ($_ENV['DB_USER'] ?? 'root')));
+            $password = (defined('DB_PASS') ? DB_PASS : ($_ENV['DB_PASSWORD'] ?? ''));
             $charset = $_ENV['DB_CHARSET'] ?? 'utf8mb4';
 
             $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset={$charset}";
