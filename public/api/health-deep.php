@@ -17,6 +17,10 @@ $startTs = microtime(true);
 
 // Cargar entorno de forma robusta (.env y fallback .env.production)
 try {
+    // Incluir constantes del sistema si existen
+    $constantsFile = __DIR__ . '/../../config/constants.php';
+    if (file_exists($constantsFile)) { @include_once $constantsFile; }
+
     // Fallback sin dotfiles: incluir env.php si existe
     $envPhp = __DIR__ . '/../../env.php';
     if (file_exists($envPhp)) { @include_once $envPhp; }

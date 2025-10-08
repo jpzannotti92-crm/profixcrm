@@ -13,6 +13,10 @@ class Connection
     private function __construct()
     {
         try {
+            // Cargar constantes del sistema (DB_*), si están disponibles
+            $constantsFile = __DIR__ . '/../../config/constants.php';
+            if (file_exists($constantsFile)) { @include_once $constantsFile; }
+
             // Fallback adicional: incluir env.php si existe (evita depender de dotfiles en producción)
             $envPhp = __DIR__ . '/../../env.php';
             if (file_exists($envPhp)) { @include_once $envPhp; }

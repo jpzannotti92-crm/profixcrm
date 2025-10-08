@@ -114,7 +114,7 @@ PHP
           set -e
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -e "set net:timeout 20; set net:max-retries 2; set ssl:verify-certificate no; pwd; ls; cd ${FTP_DIR}; pwd; ls; bye" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER"
+          lftp -e "set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; pwd; ls; cd ${FTP_DIR}; pwd; ls; bye" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -152,7 +152,7 @@ PHP
           set -e
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -e "set net:timeout 20; set net:max-retries 2; set ssl:verify-certificate no; cd ${FTP_DIR}; put -O . .env; put -O . .env.production; ls -la; bye" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER"
+          lftp -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; cd ${FTP_DIR}; put -O . .env; put -O . .env.production; put -O . env.php; mkdir -p config; put -O config config/config.php; ls -la; bye" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
