@@ -125,6 +125,24 @@ if (!$checks['env_loaded']) {
     if (defined('DB_NAME')) { $_ENV['DB_DATABASE'] = DB_NAME; $_ENV['DB_NAME'] = DB_NAME; @putenv('DB_DATABASE=' . DB_NAME); @putenv('DB_NAME=' . DB_NAME); }
     if (defined('DB_USER')) { $_ENV['DB_USERNAME'] = DB_USER; $_ENV['DB_USER'] = DB_USER; @putenv('DB_USERNAME=' . DB_USER); @putenv('DB_USER=' . DB_USER); }
     if (defined('DB_PASS')) { $_ENV['DB_PASSWORD'] = DB_PASS; $_ENV['DB_PASS'] = DB_PASS; @putenv('DB_PASSWORD=' . DB_PASS); @putenv('DB_PASS=' . DB_PASS); }
+
+    // Si aún faltan, intentar leer config/config.php directamente
+    if (!isset($_ENV['DB_HOST']) || !isset($_ENV['DB_USERNAME'])) {
+        $configFile = __DIR__ . '/../../config/config.php';
+        if (file_exists($configFile)) {
+            $cfg = @include $configFile; // devuelve array
+            if (is_array($cfg) && isset($cfg['database'])) {
+                $_ENV['DB_HOST'] = $_ENV['DB_HOST'] ?? ($cfg['database']['host'] ?? null);
+                $_ENV['DB_PORT'] = $_ENV['DB_PORT'] ?? ($cfg['database']['port'] ?? null);
+                $_ENV['DB_DATABASE'] = $_ENV['DB_DATABASE'] ?? ($cfg['database']['name'] ?? null);
+                $_ENV['DB_USERNAME'] = $_ENV['DB_USERNAME'] ?? ($cfg['database']['username'] ?? null);
+                $_ENV['DB_PASSWORD'] = $_ENV['DB_PASSWORD'] ?? ($cfg['database']['password'] ?? null);
+                foreach (['DB_HOST','DB_PORT','DB_DATABASE','DB_USERNAME','DB_PASSWORD'] as $kk) {
+                    if (isset($_ENV[$kk]) && $_ENV[$kk] !== null) { @putenv($kk.'='.$_ENV[$kk]); }
+                }
+            }
+        }
+    }
     // Recalcular
     $envPresent = 0;
     foreach ($requiredEnv as $k) {

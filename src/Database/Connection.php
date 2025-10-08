@@ -38,6 +38,24 @@ class Connection
                     }
                 }
             }
+            // Si todavía faltan variables, leer config/config.php directamente
+            if ((!isset($_ENV['DB_DATABASE']) && !defined('DB_NAME')) || (!isset($_ENV['DB_HOST']) && !defined('DB_HOST'))) {
+                $configFile = __DIR__ . '/../../config/config.php';
+                if (file_exists($configFile)) {
+                    $cfg = @include $configFile; // devuelve array
+                    if (is_array($cfg) && isset($cfg['database'])) {
+                        $_ENV['DB_HOST'] = $_ENV['DB_HOST'] ?? ($cfg['database']['host'] ?? null);
+                        $_ENV['DB_PORT'] = $_ENV['DB_PORT'] ?? ($cfg['database']['port'] ?? null);
+                        $_ENV['DB_DATABASE'] = $_ENV['DB_DATABASE'] ?? ($cfg['database']['name'] ?? null);
+                        $_ENV['DB_USERNAME'] = $_ENV['DB_USERNAME'] ?? ($cfg['database']['username'] ?? null);
+                        $_ENV['DB_PASSWORD'] = $_ENV['DB_PASSWORD'] ?? ($cfg['database']['password'] ?? null);
+                        foreach (['DB_HOST','DB_PORT','DB_DATABASE','DB_USERNAME','DB_PASSWORD'] as $kk) {
+                            if (isset($_ENV[$kk]) && $_ENV[$kk] !== null) { @putenv($kk.'='.$_ENV[$kk]); }
+                        }
+                    }
+                }
+            }
+
             $host = (defined('DB_HOST') ? DB_HOST : ($_ENV['DB_HOST'] ?? 'localhost'));
             $port = (defined('DB_PORT') ? DB_PORT : ($_ENV['DB_PORT'] ?? '3306'));
             // Admitir tanto DB_DATABASE como DB_NAME para compatibilidad con distintos .env
