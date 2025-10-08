@@ -13,6 +13,10 @@ class Connection
     private function __construct()
     {
         try {
+            // Fallback adicional: incluir env.php si existe (evita depender de dotfiles en producción)
+            $envPhp = __DIR__ . '/../../env.php';
+            if (file_exists($envPhp)) { @include_once $envPhp; }
+
             // Asegurar carga de .env en contextos CLI o entornos sin Composer
             if ((!isset($_ENV['DB_DATABASE']) && !isset($_ENV['DB_NAME'])) || !isset($_ENV['DB_HOST'])) {
                 $envFile = __DIR__ . '/../../.env';

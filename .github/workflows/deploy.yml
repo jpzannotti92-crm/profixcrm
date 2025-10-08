@@ -43,6 +43,18 @@ jobs:
           if [ -n "$ENV_FILE" ]; then
             printf "%s" "$ENV_FILE" > .env.production
             cp .env.production .env
+            # Generar env.php como fallback sin dotfiles
+            echo "<?php" > env.php
+            while IFS= read -r line; do
+              # Omitir comentarios y líneas vacías
+              if [ -z "${line}" ] || [ "${line#\#}" != "${line}" ]; then continue; fi
+              key=$(printf "%s" "$line" | cut -d '=' -f1 | xargs)
+              val=$(printf "%s" "$line" | cut -d '=' -f2-)
+              # Quitar comillas rodeando el valor
+              val=${val%\"}; val=${val#\"}; val=${val%\'}; val=${val#\'}
+              printf "$_ENV['%s']='%s'; putenv('%s=%s');\n" "$key" "$val" "$key" "$val" >> env.php
+            done < .env.production
+            echo "?>" >> env.php
           else
             echo "ENV_PRODUCTION secret is empty or not set" && exit 1
           fi

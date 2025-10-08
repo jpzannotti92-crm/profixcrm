@@ -17,6 +17,10 @@ $startTs = microtime(true);
 
 // Cargar entorno de forma robusta (.env y fallback .env.production)
 try {
+    // Fallback sin dotfiles: incluir env.php si existe
+    $envPhp = __DIR__ . '/../../env.php';
+    if (file_exists($envPhp)) { @include_once $envPhp; }
+
     // Intentar vendor autoload cuando esté disponible
     if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
         require_once __DIR__ . '/../../vendor/autoload.php';
