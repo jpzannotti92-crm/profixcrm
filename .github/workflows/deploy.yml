@@ -121,7 +121,7 @@ PHP
             LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
             LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:ssl-session-reuse true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true"
           fi
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; pwd; ls; cd public_html; pwd; ls; cd public; pwd; ls; bye"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; pwd; ls; mkdir -f assets; ls; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -129,7 +129,7 @@ PHP
           FTP_PORT: ${{ secrets.FTP_PORT }}
           FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
 
-      - name: FTP/SFTP smoke test (upload marker to /public)
+      - name: FTP/SFTP smoke test (upload marker to root)
         run: |
           set -e
           echo "FTP_OK $(date -u)" > ftp_check_marker.html
@@ -142,7 +142,7 @@ PHP
             LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
             LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:ssl-session-reuse true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true"
           fi
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; cd public_html/public; put -O . ftp_check_marker.html; ls -la; bye"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; put -O . ftp_check_marker.html; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -159,7 +159,7 @@ PHP
           port: ${{ secrets.FTP_PORT }}
           protocol: ${{ secrets.FTP_PROTOCOL }}
           local-dir: public
-          server-dir: /public_html/
+          server-dir: /
           dangerous-clean-slate: false
           exclude: |
             **/.git/**
@@ -176,7 +176,7 @@ PHP
             **/*.cache
           timeout: 600000
 
-      - name: Upload env and config (to public_html)
+      - name: Upload env and config (to root)
         run: |
           set -e
           sudo apt-get update -y
@@ -188,7 +188,7 @@ PHP
             LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
             LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:ssl-session-reuse true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true"
           fi
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; cd public_html; put -O . .env; put -O . .env.production; put -O . env.php; mkdir -f config; put -O config config/config.php; ls -la; bye"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; put -O . .env; put -O . .env.production; put -O . env.php; mkdir -f config; put -O config config/config.php; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -196,7 +196,7 @@ PHP
           FTP_PORT: ${{ secrets.FTP_PORT }}
           FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
 
-      - name: Upload frontend index and assets explicitly to /public
+      - name: Upload frontend index and assets to root
         run: |
           set -e
           sudo apt-get update -y
@@ -204,7 +204,7 @@ PHP
           # Asegurar que public/index.html y assets existen localmente
           if [ -f frontend/dist/index.html ]; then cp -f frontend/dist/index.html public/index.html; fi
           if [ -d frontend/dist/assets ]; then rsync -av --delete frontend/dist/assets/ public/assets/; fi
-          # Subir explícitamente al docroot /public
+          # Subir explícitamente al docroot (raíz)
           if [ "${FTP_PROTOCOL}" = "sftp" ]; then
             LFTP_URL="sftp://${FTP_SERVER}:${FTP_PORT}"
             LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set sftp:auto-confirm yes; set cmd:trace true"
@@ -212,7 +212,7 @@ PHP
             LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
             LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:ssl-session-reuse true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true"
           fi
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; cd public_html/public; mkdir -f assets; put -O . public/index.html; mirror -R --verbose --delete public/assets assets; ls -la; bye"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; mkdir -f assets; put -O . public/index.html; mirror -R --verbose --delete public/assets assets; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -233,7 +233,7 @@ PHP
             LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
             LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true"
           fi
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; cd public_html/public/assets; mput -E -O . public/assets/*; ls -la; bye"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; mkdir -f assets; cd assets; mput -E -O . public/assets/*; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
