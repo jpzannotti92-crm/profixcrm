@@ -60,17 +60,31 @@ try {
     // Usar returnMode para capturar respuesta del middleware y no terminar el proceso
     $authResult = $rbacMiddleware->handle($request, null, null, true);
     if ($authResult !== true) {
-        // Fallback controlado para que la UI no "pierda" el estado por un header faltante
+        // Fallback controlado: mantener estructura esperada por el frontend para no romper navegación
         echo json_encode([
             'success' => true,
-            'message' => 'Datos de respaldo (no autenticado)',
+            'message' => 'Perfil de respaldo (no autenticado)',
             'data' => [
-                'filters' => [],
-                'profile' => [
+                'user' => [
                     'id' => 0,
                     'username' => 'guest',
-                    'permissions' => ['users.view']
-                ]
+                    'email' => null,
+                    'first_name' => null,
+                    'last_name' => null,
+                    'status' => 'inactive',
+                    'created_at' => null
+                ],
+                'roles' => [],
+                // Permisos mínimos para que la UI no quede vacía; el backend seguirá protegiendo operaciones
+                'permissions' => [],
+                'desks' => [],
+                'access_level' => [
+                    'is_super_admin' => false,
+                    'is_admin' => false,
+                    'is_manager' => false,
+                    'has_sales_role' => false
+                ],
+                'filters' => []
             ],
             'debug_info' => $authResult
         ]);
@@ -83,14 +97,27 @@ try {
     header('Content-Type: application/json');
     echo json_encode([
         'success' => true,
-        'message' => 'Datos de respaldo (error de autenticación)',
+        'message' => 'Perfil de respaldo (error de autenticación)',
         'data' => [
-            'filters' => [],
-            'profile' => [
+            'user' => [
                 'id' => 0,
                 'username' => 'guest',
-                'permissions' => ['users.view']
-            ]
+                'email' => null,
+                'first_name' => null,
+                'last_name' => null,
+                'status' => 'inactive',
+                'created_at' => null
+            ],
+            'roles' => [],
+            'permissions' => [],
+            'desks' => [],
+            'access_level' => [
+                'is_super_admin' => false,
+                'is_admin' => false,
+                'is_manager' => false,
+                'has_sales_role' => false
+            ],
+            'filters' => []
         ]
     ]);
     exit;

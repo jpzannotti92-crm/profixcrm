@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
@@ -21,6 +21,15 @@ export default function LoginPage() {
   const location = useLocation()
   
   const from = location.state?.from?.pathname || '/dashboard'
+
+  // Redirigir a login de producción cuando el preview corre en localhost
+  useEffect(() => {
+    const host = window.location.hostname
+    const isLocal = host === 'localhost' || host === '127.0.0.1'
+    if (isLocal) {
+      window.location.href = 'https://spin2pay.com/auth/login'
+    }
+  }, [])
 
   const {
     register,
