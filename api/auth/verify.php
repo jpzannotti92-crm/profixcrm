@@ -5,7 +5,7 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 header('Access-Control-Allow-Origin: ' . ($origin ?: '*'));
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token, X-Access-Token, X-Token, X-JWT');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -92,10 +92,10 @@ function early_extract_token(): ?string {
 }
 
 $__earlyToken = early_extract_token();
-if (!$__earlyToken) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Token no proporcionado']);
-    exit;
+// Delegar verificación al endpoint público aunque no se haya podido extraer token aquí.
+// Si se obtuvo un token temprano, exponerlo para el verificador público.
+if ($__earlyToken) {
+    $GLOBALS['__proxied_token'] = $__earlyToken;
 }
 
 // Intentar resolver ruta absoluta hacia public/api/auth/verify.php
@@ -124,6 +124,3 @@ echo json_encode([
     'code' => 'verify_proxy_missing'
 ]);
 ?>
-    // Token pasado por rewrite desde el path /api/auth/verify/<token>
-    $envToken = $_SERVER['REDIRECT_PROXY_TOKEN'] ?? ($_SERVER['PROXY_TOKEN'] ?? null);
-    if ($envToken) { return (string)$envToken; }
