@@ -188,6 +188,19 @@ PHP
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
 
+      - name: Force upload assets with mput (fallback)
+        run: |
+          set -e
+          sudo apt-get update -y
+          sudo apt-get install -y lftp
+          # Subida por lotes de archivos en assets como fallback
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true; cd public_html/public/assets; mput -E -O . public/assets/*; ls -la; bye"
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+
       - name: Post-deploy health check
         run: |
           set -e
