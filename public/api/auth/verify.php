@@ -169,12 +169,55 @@ use IaTradeCRM\Models\User;
 try {
     // El token ya fue validado como presente arriba
 
-    // Cargar secreto JWT de forma tolerante
-    $secret = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET') ?? 'your-super-secret-jwt-key-change-in-production-2024';
+    // Cargar secreto JWT de forma tolerante, incluyendo .env.production si existe
+    if (!isset($_ENV['JWT_SECRET']) || $_ENV['JWT_SECRET'] === '') {
+        $envProd = dirname(__DIR__, 3) . '/.env.production';
+        if (is_file($envProd)) {
+            $lines = @file($envProd, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if (is_array($lines)) {
+                foreach ($lines as $line) {
+                    if (strpos(ltrim($line), '#') === 0) { continue; }
+                    $parts = explode('=', $line, 2);
+                    if (count($parts) === 2) {
+                        $k = trim($parts[0]);
+                        $v = trim($parts[1], " \t\n\r\0\x0B\"'" );
+                        $_ENV[$k] = $v;
+                        @putenv("$k=$v");
+                    }
+                }
+            }
+        }
+    }
 
-    try {
-        $decoded = JWT::decode($token, new Key($secret, 'HS256'));
-        
+    // Lista de posibles secretos para compatibilidad con instalaciones previas
+    $secretCandidates = array_values(array_unique(array_filter([
+        $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET') ?? '',
+        'password',
+        'your-super-secret-jwt-key-change-in-production-2024',
+        'iatrade_crm_secret_key_2024'
+    ], fn($v) => $v !== '')));
+
+    $decoded = null;
+    $lastError = null;
+    foreach ($secretCandidates as $sec) {
+        try {
+            $decoded = JWT::decode($token, new Key($sec, 'HS256'));
+            $lastError = null;
+            break; // éxito con este secreto
+        } catch (\Throwable $e) {
+            $lastError = $e;
+        }
+    }
+
+    if (!$decoded) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Token inválido o expirado'
+        ]);
+        exit;
+    }
+
         try {
             $user = User::find($decoded->user_id);
         } catch (\Throwable $dbEx) {
@@ -214,14 +257,7 @@ try {
                 'permissions' => $permissions,
             ]
         ]);
-    } catch (Exception $e) {
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Token inválido o expirado'
-        ]);
-        exit;
-    }
+    
 } catch (\Throwable $fatal) {
     // Fallback general: nunca devolver 500, mantener JSON
     http_response_code(401);
