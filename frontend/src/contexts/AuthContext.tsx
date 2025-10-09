@@ -117,6 +117,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // NUNCA eliminar token en caso de error de red o timeout
           console.log('Error de red/timeout, manteniendo token')
           // Mantener la sesión con datos de localStorage
+          // Intentar cargar el perfil completo para recuperar permisos/roles
+          try {
+            if (authService) {
+              console.log('Intentando cargar perfil pese al error de verificación...')
+              const profileLoaded = await authService.loadUserProfile()
+              if (profileLoaded) {
+                console.log('Perfil cargado exitosamente tras fallback de red')
+                const storedUser = localStorage.getItem('user')
+                const baseUser = storedUser ? JSON.parse(storedUser) : null
+                const completeUserData = {
+                  ...(baseUser || {}),
+                  permissions: authService.permissions || [],
+                  roles: authService.roles || []
+                }
+                if (baseUser) {
+                  setUser(completeUserData)
+                  localStorage.setItem('user', JSON.stringify(completeUserData))
+                }
+              } else {
+                console.warn('No se pudo cargar el perfil en fallback; usando datos básicos si existen')
+              }
+            }
+          } catch (profileError) {
+            console.error('Error cargando perfil en fallback:', profileError)
+          }
         }
       }
       
@@ -139,6 +164,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setToken(response.token)
         setUser(response.user)
         localStorage.setItem('auth_token', response.token)
+        try {
+          localStorage.setItem('user', JSON.stringify(response.user))
+        } catch (e) {
+          console.error('No se pudo persistir el usuario en localStorage:', e)
+        }
+
+        // Establecer header y cargar perfil completo inmediatamente tras login
+        try {
+          if (authService) {
+            authService.setAuthHeader(response.token)
+            console.log('AuthContext: Cargando perfil completo post-login...')
+            const profileLoaded = await authService.loadUserProfile()
+            if (profileLoaded) {
+              const completeUserData = {
+                ...response.user,
+                permissions: authService.permissions || [],
+                roles: authService.roles || []
+              }
+              setUser(completeUserData)
+              localStorage.setItem('user', JSON.stringify(completeUserData))
+            } else {
+              console.warn('AuthContext: No se pudo cargar el perfil completo post-login')
+            }
+          }
+        } catch (profileError) {
+          console.error('AuthContext: Error cargando perfil post-login:', profileError)
+        }
         
         toast.success(`¡Bienvenido, ${response.user.first_name}!`)
         return true
@@ -168,17 +220,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(null)
       setToken(null)
       localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
       toast.success('Sesión cerrada exitosamente')
       
-      // Si se proporciona un callback de navegación, usarlo
+      // Redirección después de logout
+      const targetLoginUrl = 'https://spin2pay.com/auth/login'
       if (onNavigate) {
+        // Ignorar navegación interna en producción; usar redirección absoluta
         setTimeout(() => {
-          onNavigate()
+          window.location.href = targetLoginUrl
         }, 100)
       } else {
         // Fallback para casos donde no se puede usar useNavigate
         setTimeout(() => {
-          window.location.replace('/auth/login')
+          window.location.replace(targetLoginUrl)
         }, 100)
       }
     }
@@ -203,19 +258,94 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false
-    
-    // Usar el método del authService que incluye el mapeo completo
-    if (!authService) {
-      console.warn('authService no está disponible, verificando permisos desde el usuario')
-      return user.permissions?.includes(permission) || false
+
+    // 1) SuperAdmin/Admin siempre tienen acceso
+    const userRolesRaw = user.roles || []
+    const userRoleNames = user.role_names || []
+    const hasAdminRole = [...userRolesRaw, ...userRoleNames].some((r: any) => {
+      const name = typeof r === 'string' ? r : (r?.name || '')
+      return name === 'admin' || name === 'super_admin'
+    })
+    if (hasAdminRole) return true
+
+    // 2) Intentar con authService (usa mapeo interno)
+    try {
+      if (authService && authService.hasPermissionLocal(permission)) {
+        return true
+      }
+    } catch (e) {
+      console.warn('hasPermission: fallo en authService.hasPermissionLocal, usamos fallback del usuario', e)
     }
-    
-    return authService.hasPermissionLocal(permission)
+
+    // 3) Fallback: verificar permisos disponibles en user con mapeo
+    const permissionMap: Record<string, string> = {
+      'view_dashboard': 'dashboard.view',
+      'view_leads': 'leads.view',
+      'leads.view.assigned': 'leads.view',
+      'create_leads': 'leads.create',
+      'edit_leads': 'leads.edit',
+      'delete_leads': 'leads.delete',
+      'assign_leads': 'leads.assign',
+      'import_leads': 'leads.import',
+      'export_leads': 'leads.export',
+      'view_users': 'users.view',
+      'create_users': 'users.create',
+      'edit_users': 'users.edit',
+      'delete_users': 'users.delete',
+      'view_roles': 'roles.view',
+      'create_roles': 'roles.create',
+      'edit_roles': 'roles.edit',
+      'delete_roles': 'roles.delete',
+      'manage_roles': 'roles.view',
+      'view_desks': 'desks.view',
+      'create_desks': 'desks.create',
+      'edit_desks': 'desks.edit',
+      'delete_desks': 'desks.delete',
+      'manage_desks': 'desks.view',
+      'view_trading': 'trading.view',
+      'view_trading_accounts': 'trading_accounts.view',
+      'create_trading': 'trading.create',
+      'edit_trading': 'trading.edit',
+      'delete_trading': 'trading.delete',
+      'view_deposits_withdrawals': 'deposits_withdrawals.view',
+      'approve_transactions': 'transactions.approve',
+      'process_transactions': 'transactions.process',
+      'view_reports': 'reports.view',
+      'create_reports': 'reports.create',
+      'manage_permissions': 'user_permissions.edit',
+      'view_audit': 'system.audit',
+      'manage_states': 'manage_states',
+      'view_states': 'states.view'
+    }
+
+    const mapped = permissionMap[permission]
+    const userPerms = user.permissions || []
+    const normalizedUserPerms = userPerms.map((p: any) => (typeof p === 'string' ? p : (p?.name || p?.slug)))
+
+    if (mapped) {
+      return normalizedUserPerms.includes(permission) || normalizedUserPerms.includes(mapped)
+    }
+    return normalizedUserPerms.includes(permission)
   }
 
   const hasRole = (role: string): boolean => {
     if (!user) return false
-    return user.roles.includes(role)
+
+    // Verificar roles locales (strings u objetos) y role_names
+    const rolesRaw = user.roles || []
+    const roleNames = user.role_names || []
+    const hasLocalRole = [...rolesRaw, ...roleNames].some((r: any) => {
+      const name = typeof r === 'string' ? r : (r?.name || '')
+      return name === role
+    })
+    if (hasLocalRole) return true
+
+    // Intentar con authService
+    try {
+      return !!authService && authService.hasRole(role)
+    } catch {
+      return false
+    }
   }
 
   const updateUserSettings = (newSettings: Record<string, any>) => {

@@ -140,7 +140,7 @@ if (!headers_sent()) {
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Vary: Origin');
     header('Access-Control-Allow-Methods: POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
     // Permitir envío de cookies cuando se use CORS/proxy
     header('Access-Control-Allow-Credentials: true');
 }
@@ -317,7 +317,7 @@ try {
 }
 
 // Generar JWT
-$secret = $_ENV['JWT_SECRET'] ?? 'password';
+$secret = $_ENV['JWT_SECRET'] ?? 'your-super-secret-jwt-key-change-in-production-2024';
 $expiration = $remember ? (7 * 24 * 60 * 60) : (24 * 60 * 60);
 
 $payload = [

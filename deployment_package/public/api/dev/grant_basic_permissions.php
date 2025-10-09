@@ -29,6 +29,25 @@ require_once __DIR__ . '/../../../src/Database/Connection.php';
 
 use iaTradeCRM\Database\Connection;
 
+// Crea el permiso si no existe y devuelve su ID
+function ensurePermission(PDO $pdo, string $name, ?string $code = null, ?string $description = null): int {
+    $stmt = $pdo->prepare('SELECT id FROM permissions WHERE name = ? LIMIT 1');
+    $stmt->execute([$name]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) { return (int)$row['id']; }
+    if ($code && $description) {
+        $ins = $pdo->prepare('INSERT INTO permissions (code, name, description) VALUES (?, ?, ?)');
+        $ins->execute([$code, $name, $description]);
+    } elseif ($code) {
+        $ins = $pdo->prepare('INSERT INTO permissions (code, name) VALUES (?, ?)');
+        $ins->execute([$code, $name]);
+    } else {
+        $ins = $pdo->prepare('INSERT INTO permissions (name) VALUES (?)');
+        $ins->execute([$name]);
+    }
+    return (int)$pdo->lastInsertId();
+}
+
 header('Content-Type: application/json');
 // CORS básico para desarrollo
 $origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost:3000';
@@ -56,14 +75,24 @@ try {
     if (!$role) { throw new Exception("No existe rol 'admin' ni 'super_admin'"); }
     $roleId = (int)$role['id'];
 
-    // Obtener IDs de permisos requeridos
-    $permStmt = $db->prepare("SELECT id, name FROM permissions WHERE name IN ('roles.view','desks.view')");
-    $permStmt->execute();
-    $perms = $permStmt->fetchAll();
+    // Lista ampliada de permisos de navegación (visibilidad de módulos)
+    $requiredPerms = [
+        ['name' => 'dashboard.view', 'code' => 'dashboard_view', 'desc' => 'Ver Dashboard'],
+        ['name' => 'leads.view', 'code' => 'leads_view', 'desc' => 'Ver Leads'],
+        ['name' => 'users.view', 'code' => 'users_view', 'desc' => 'Ver Usuarios'],
+        ['name' => 'roles.view', 'code' => 'roles_view', 'desc' => 'Ver Roles'],
+        ['name' => 'desks.view', 'code' => 'desks_view', 'desc' => 'Ver Escritorios'],
+        ['name' => 'manage_states', 'code' => 'manage_states', 'desc' => 'Gestionar Estados'],
+        ['name' => 'trading_accounts.view', 'code' => 'trading_accounts_view', 'desc' => 'Ver Cuentas de Trading'],
+        ['name' => 'reports.view', 'code' => 'reports_view', 'desc' => 'Ver Reportes'],
+        ['name' => 'deposits_withdrawals.view', 'code' => 'deposits_withdrawals_view', 'desc' => 'Ver Depósitos/Retiros']
+    ];
+
+    // Asegurar que existan y recolectar IDs
     $permIds = [];
-    foreach ($perms as $p) { $permIds[$p['name']] = (int)$p['id']; }
-    if (!isset($permIds['roles.view']) || !isset($permIds['desks.view'])) {
-        throw new Exception("Faltan permisos 'roles.view' o 'desks.view' en la tabla permissions");
+    foreach ($requiredPerms as $p) {
+        $pid = ensurePermission($db, $p['name'], $p['code'], $p['desc']);
+        $permIds[$p['name']] = $pid;
     }
 
     // Detectar columnas de role_permissions
@@ -84,15 +113,17 @@ try {
     }
 
     $inserted = [];
-    foreach (['roles.view','desks.view'] as $permName) {
-        // Verificar existencia
+    foreach ($requiredPerms as $perm) {
+        $name = $perm['name'];
+        if (!isset($permIds[$name])) { continue; }
+        $permId = $permIds[$name];
         $existsStmt = $db->prepare("SELECT COUNT(*) FROM role_permissions WHERE role_id = ? AND permission_id = ?");
-        $existsStmt->execute([$roleId, $permIds[$permName]]);
+        $existsStmt->execute([$roleId, $permId]);
         $exists = $existsStmt->fetchColumn() > 0;
         if (!$exists) {
             $ins = $db->prepare($insertSql);
-            $ins->execute([$roleId, $permIds[$permName]]);
-            $inserted[] = $permName;
+            $ins->execute([$roleId, $permId]);
+            $inserted[] = $name;
         }
     }
 

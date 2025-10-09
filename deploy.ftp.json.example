@@ -1,0 +1,22 @@
+{
+  "host": "ftp.spin2pay.com",
+  "port": 21,
+  "username": "TU_USUARIO",
+  "password": "TU_PASSWORD",
+  "ssl": false,
+  "passive": true,
+  "remote_base_path": "/public_html",
+  "files": [
+    {
+      "local": "api/auth/verify.php",
+      "remote": "/public_html/api/auth/verify.php"
+    },
+    {
+      "local": "public/api/user-permissions.php",
+      "remote": "/public_html/api/user-permissions.php"
+    }
+  ]
+}
+
+// Copia este archivo a deploy.ftp.json y rellena tus credenciales.
+// No commitees deploy.ftp.json con secretos.

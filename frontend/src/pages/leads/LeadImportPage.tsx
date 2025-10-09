@@ -243,7 +243,7 @@ export default function LeadImportPage() {
         const lines = fileContent.split('\n').filter(line => line.trim())
         
         const startRow = importSettings.skip_first_row ? 1 : 0
-        processedData = lines.slice(startRow).map((line, index) => {
+        processedData = lines.slice(startRow).map((line) => {
           // Separar por comas o punto y coma
           const values = line.split(/[,;]/).map(value => value.trim().replace(/^["']|["']$/g, ''))
           const rowData: Record<string, string> = {}

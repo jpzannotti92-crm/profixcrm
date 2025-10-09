@@ -128,7 +128,9 @@ class ConfigManager {
     // Si tenemos VITE_API_URL, usarlo para apuntar a producción.
     const viteApi = (import.meta as any).env?.VITE_API_URL as string | undefined;
     const baseUrl = (import.meta as any).env?.VITE_BASE_URL || window.location.origin;
-    const apiUrl = viteApi || `${baseUrl}/api`;
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    // En localhost sin VITE_API_URL, apuntar a producción directa para evitar 5173/api
+    const apiUrl = (!viteApi && isLocalhost) ? 'https://spin2pay.com/api' : (viteApi || `${baseUrl}/api`);
     
     return {
       app: {

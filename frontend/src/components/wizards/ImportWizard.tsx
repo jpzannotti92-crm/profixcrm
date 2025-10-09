@@ -10,7 +10,7 @@ import {
   ExclamationTriangleIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline'
-import { leadsApi, desksApi, usersApi, leadImportApi } from '../../services/api'
+import { desksApi, usersApi, leadImportApi } from '../../services/api'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
 

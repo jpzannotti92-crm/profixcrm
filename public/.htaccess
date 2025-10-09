@@ -27,6 +27,15 @@ Options -Indexes
     Header always set X-Frame-Options DENY
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # CORS uniforme: origen dinámico, credenciales y preflight coherente
+    SetEnvIfNoCase Origin "^https?://.+$" ORIGIN=$0
+    Header always set Access-Control-Allow-Origin "%{ORIGIN}e" env=ORIGIN
+    Header always set Access-Control-Allow-Origin "*" env=!ORIGIN
+    Header always set Vary "Origin"
+    Header always set Access-Control-Allow-Credentials "true"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
 </IfModule>
 
 # Configuración PHP
@@ -38,6 +47,14 @@ Options -Indexes
 </IfModule>
 
 RewriteEngine On
+
+# Capturar Origin en variable de entorno para usar en headers
+RewriteCond %{HTTP:Origin} ^https?://.+$ [NC]
+RewriteRule ^ - [E=ORIGIN:%{HTTP:Origin}]
+
+# Responder preflight OPTIONS con 200 y cabeceras CORS de arriba
+RewriteCond %{REQUEST_METHOD} =OPTIONS
+RewriteRule ^ - [R=200,L]
 
 # Forzar raíz a servir la SPA
 RewriteRule ^$ index.html [L]

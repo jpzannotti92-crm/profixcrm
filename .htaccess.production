@@ -8,6 +8,24 @@ DirectoryIndex public/index.production.php public/index.php index.php index.html
 
 RewriteEngine On
 
+# Capturar Origin en variable de entorno para usar en headers
+RewriteCond %{HTTP:Origin} ^https?://.+$ [NC]
+RewriteRule ^ - [E=ORIGIN:%{HTTP:Origin}]
+
+# CORS uniforme: origen dinámico, credenciales y preflight coherente
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "%{ORIGIN}e" env=ORIGIN
+    Header always set Access-Control-Allow-Origin "*" env=!ORIGIN
+    Header always set Vary "Origin"
+    Header always set Access-Control-Allow-Credentials "true"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Responder preflight OPTIONS con 200 y cabeceras CORS de arriba
+RewriteCond %{REQUEST_METHOD} =OPTIONS
+RewriteRule ^ - [R=200,L]
+
 # Rutas API amigables: mapear /api/<nombre> a /api/<nombre>.php en raíz
 RewriteCond %{REQUEST_URI} ^/api/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f

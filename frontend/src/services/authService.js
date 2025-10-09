@@ -41,13 +41,10 @@ class AuthService {
 
     setAuthHeader(token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        // Encabezado alternativo para máxima compatibilidad con proxies/servidores
-        axios.defaults.headers.common['X-Auth-Token'] = token;
     }
 
     removeAuthHeader() {
         delete axios.defaults.headers.common['Authorization'];
-        delete axios.defaults.headers.common['X-Auth-Token'];
     }
 
     // Asegura que el header Authorization esté presente antes de llamar endpoints protegidos

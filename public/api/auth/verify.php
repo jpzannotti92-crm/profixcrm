@@ -4,10 +4,13 @@ header('Content-Type: application/json');
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if ($origin) {
     header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: *');
 }
+header('Vary: Origin');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -15,42 +18,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once __DIR__ . '/../../../vendor/autoload.php';
-if (file_exists(__DIR__ . '/../../../.env')) {
-    $dotenv = Dotenv\Dotenv::createMutable(__DIR__ . '/../../..');
-    if (method_exists($dotenv, 'overload')) { $dotenv->overload(); } else { $dotenv->load(); }
+// Extraer token ANTES de cargar dependencias para evitar 500 en solicitudes sin token
+$token = null;
+$headers = function_exists('getallheaders') ? getallheaders() : [];
+$authHeader = $headers['Authorization'] ?? ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+$xAuth = $headers['X-Auth-Token'] ?? ($headers['x-auth-token'] ?? '');
+
+if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $m)) {
+    $token = $m[1];
+} elseif (!empty($xAuth)) {
+    $token = $xAuth;
+} elseif (isset($_COOKIE['auth_token'])) {
+    $token = $_COOKIE['auth_token'];
+}
+
+if (!$token) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Token no proporcionado']);
+    exit;
+}
+
+// Autoload de Composer opcional (evitar 500 si no existe)
+if (file_exists(__DIR__ . '/../../../vendor/autoload.php')) {
+    require_once __DIR__ . '/../../../vendor/autoload.php';
+    if (file_exists(__DIR__ . '/../../../.env')) {
+        $dotenv = Dotenv\Dotenv::createMutable(__DIR__ . '/../../..');
+        if (method_exists($dotenv, 'overload')) { $dotenv->overload(); } else { $dotenv->load(); }
+    }
+} else {
+    error_log('public/api/auth/verify.php: vendor/autoload.php no encontrado, continuando sin Composer');
 }
 
 // Cargar dependencias del proyecto (evitar fallo de autoload con App\Models)
-require_once __DIR__ . '/../../../src/Database/Connection.php';
-require_once __DIR__ . '/../../../src/Models/BaseModel.php';
-require_once __DIR__ . '/../../../src/Models/User.php';
+// Intentar múltiples rutas para entornos donde /src no está bajo /public
+$srcCandidates = [
+    __DIR__ . '/../../../src',            // public/src (puede no existir)
+    (rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/') . '/src') ?: '', // /public_html/src
+    __DIR__ . '/../../../../src',         // raíz del proyecto
+];
+foreach ($srcCandidates as $srcBase) {
+    if ($srcBase && is_dir($srcBase)) {
+        @require_once $srcBase . '/Database/Connection.php';
+        @require_once $srcBase . '/Models/BaseModel.php';
+        @require_once $srcBase . '/Models/User.php';
+        break;
+    }
+}
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use IaTradeCRM\Models\User;
 
 try {
-    $token = null;
-    $headers = function_exists('getallheaders') ? getallheaders() : [];
-    $authHeader = $headers['Authorization'] ?? ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
-    $xAuth = $headers['X-Auth-Token'] ?? ($headers['x-auth-token'] ?? '');
+    // El token ya fue validado como presente arriba
 
-    if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $m)) {
-        $token = $m[1];
-    } elseif (!empty($xAuth)) {
-        $token = $xAuth;
-    } elseif (isset($_COOKIE['auth_token'])) {
-        $token = $_COOKIE['auth_token'];
-    }
-
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Token no proporcionado']);
-        exit;
-    }
-
-    $secret = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET') ?? 'password';
+    // Cargar secreto JWT de forma tolerante
+    $secret = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET') ?? 'your-super-secret-jwt-key-change-in-production-2024';
 
     try {
         $decoded = JWT::decode($token, new Key($secret, 'HS256'));
@@ -74,8 +97,13 @@ try {
             exit;
         }
 
-        $roles = method_exists($user, 'getRoles') ? $user->getRoles() : [];
-        $permissions = method_exists($user, 'getPermissions') ? $user->getPermissions() : [];
+        // Roles y permisos pueden ser objetos; normalizar a strings si es posible
+        $rolesRaw = method_exists($user, 'getRoles') ? $user->getRoles() : [];
+        $permissionsRaw = method_exists($user, 'getPermissions') ? $user->getPermissions() : [];
+        $roles = array_map(function($r) { return is_array($r) ? ($r['name'] ?? ($r['display_name'] ?? '')) : (is_string($r) ? $r : ''); }, $rolesRaw);
+        $roles = array_values(array_filter($roles, fn($v) => $v !== ''));
+        $permissions = array_map(function($p) { return is_array($p) ? ($p['name'] ?? ($p['display_name'] ?? '')) : (is_string($p) ? $p : ''); }, $permissionsRaw);
+        $permissions = array_values(array_filter($permissions, fn($v) => $v !== ''));
 
         echo json_encode([
             'success' => true,

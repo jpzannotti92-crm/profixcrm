@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import { 
   HomeIcon,
   UsersIcon,
@@ -65,10 +65,30 @@ export default function DashboardLayout() {
   const { user, logout, hasPermission } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   const handleLogout = () => {
-    logout(() => navigate('/auth/login', { replace: true }))
+    // Forzar redirección al login de producción tras cerrar sesión
+    logout()
+  }
+
+  // Diagnóstico: registrar permisos/roles y resultado de filtrado
+  try {
+    console.info('NAV: usuario actual', {
+      username: user?.username,
+      roles: user?.roles,
+      permissionsCount: user?.permissions?.length,
+    })
+    console.info('NAV: checks de permisos rápidos', {
+      leads: hasPermission('view_leads'),
+      users: hasPermission('view_users'),
+      roles: hasPermission('view_roles'),
+      desks: hasPermission('view_desks'),
+      states: hasPermission('manage_states'),
+      trading: hasPermission('view_trading_accounts'),
+    })
+  } catch (e) {
+    console.warn('NAV: error registrando diagnóstico de permisos', e)
   }
 
   // Filtrar navegación basada en permisos y roles
@@ -79,8 +99,11 @@ export default function DashboardLayout() {
         return null
       }
 
-      // Verificar roles específicos (al menos uno debe coincidir)
-      if (item.roles && !item.roles.some((role) => user?.roles?.includes(role))) {
+      // Verificar roles específicos (al menos uno debe coincidir). Soportar strings u objetos
+      if (item.roles && !item.roles.some((role) => {
+        const userRoles = user?.roles || []
+        return userRoles.some((r) => (typeof r === 'string' ? r : (r as any)?.name) === role)
+      })) {
         return null
       }
 
@@ -93,6 +116,10 @@ export default function DashboardLayout() {
       return item
     })
     .filter((item): item is NavItem => item !== null)
+
+  try {
+    console.info('NAV: items visibles', filteredNavigation.map(i => i.name))
+  } catch {}
 
   return (
     <div className="min-h-screen w-full bg-secondary-50 dark:bg-secondary-900">

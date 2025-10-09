@@ -23,9 +23,6 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token') // Usar auth_token en lugar de token
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
-    // Encabezado alternativo para máxima compatibilidad con proxies/servidores
-    // Algunos entornos pueden no reenviar Authorization correctamente
-    ;(config.headers as any)['X-Auth-Token'] = token
   }
   return config
 })
