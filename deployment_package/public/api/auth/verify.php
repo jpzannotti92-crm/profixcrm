@@ -82,6 +82,19 @@ try {
     }
 
     if (!$token) {
+        $queryCandidates = [
+            $_GET['token'] ?? '',
+            $_GET['access_token'] ?? '',
+            $_GET['t'] ?? '',
+            $_GET['k'] ?? '',
+            $_GET['jwt'] ?? ''
+        ];
+        foreach ($queryCandidates as $qTok) {
+            if ($qTok !== '') { $token = (string)$qTok; break; }
+        }
+    }
+
+    if (!$token) {
         http_response_code(401);
         echo json_encode(['success' => false, 'message' => 'Token no proporcionado']);
         exit;
