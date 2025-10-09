@@ -7,16 +7,16 @@ return [
     'database' => [
         'host' => 'localhost',
         'port' => '3306',
-        'name' => 'iatrade_crm',
-        'username' => 'root',
-        'password' => '',
+        'name' => 'spin2pay_profixcrm',
+        'username' => 'spin2pay_profixadmin',
+        'password' => 'Jeanpi9941991@',
         'charset' => 'utf8mb4',
         'collation' => 'utf8mb4_unicode_ci'
     ],
     
     'app' => [
         'name' => 'iaTrade CRM',
-        'url' => 'http://localhost:3001',
+        'url' => 'https://spin2pay.com',
         'env' => 'production',
         'debug' => false,
         'timezone' => 'America/Mexico_City'
