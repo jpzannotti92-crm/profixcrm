@@ -109,32 +109,48 @@ PHP
           # Añadir archivos vacíos para asegurar su subida por FTP
           touch storage/.keep storage/logs/.keep uploads/.keep
 
-      - name: Verify FTP connection and target directory
+      - name: Verify FTP/SFTP connection and target directory
         run: |
           set -e
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; pwd; ls; cd public_html; pwd; ls; cd public; pwd; ls; bye"
+          if [ "${FTP_PROTOCOL}" = "sftp" ]; then
+            LFTP_URL="sftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set sftp:auto-confirm yes; set cmd:fail-exit no; set cmd:trace true"
+          else
+            LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true"
+          fi
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; pwd; ls; cd public_html; pwd; ls; cd public; pwd; ls; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
 
-      - name: FTP smoke test (upload marker to /public)
+      - name: FTP/SFTP smoke test (upload marker to /public)
         run: |
           set -e
           echo "FTP_OK $(date -u)" > ftp_check_marker.html
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; cd public_html/public; put -O . ftp_check_marker.html; ls -la; bye"
+          if [ "${FTP_PROTOCOL}" = "sftp" ]; then
+            LFTP_URL="sftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set sftp:auto-confirm yes; set cmd:fail-exit no; set cmd:trace true"
+          else
+            LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true"
+          fi
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; cd public_html/public; put -O . ftp_check_marker.html; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
 
-      - name: Deploy via FTP
+      - name: Deploy via FTP/SFTP (Action)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -142,8 +158,8 @@ PHP
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT }}
           protocol: ${{ secrets.FTP_PROTOCOL }}
-          local-dir: ./
-          server-dir: public_html
+          local-dir: public
+          server-dir: /public_html/
           dangerous-clean-slate: false
           exclude: |
             **/.git/**
@@ -165,12 +181,20 @@ PHP
           set -e
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true; cd public_html; put -O . .env; put -O . .env.production; put -O . env.php; mkdir -f config; put -O config config/config.php; ls -la; bye"
+          if [ "${FTP_PROTOCOL}" = "sftp" ]; then
+            LFTP_URL="sftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set sftp:auto-confirm yes; set cmd:trace true"
+          else
+            LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true"
+          fi
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; cd public_html; put -O . .env; put -O . .env.production; put -O . env.php; mkdir -f config; put -O config config/config.php; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
 
       - name: Upload frontend index and assets explicitly to /public
         run: |
@@ -181,12 +205,20 @@ PHP
           if [ -f frontend/dist/index.html ]; then cp -f frontend/dist/index.html public/index.html; fi
           if [ -d frontend/dist/assets ]; then rsync -av --delete frontend/dist/assets/ public/assets/; fi
           # Subir explícitamente al docroot /public
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true; cd public_html/public; mkdir -f assets; put -O . public/index.html; mirror -R --verbose --delete public/assets assets; ls -la; bye"
+          if [ "${FTP_PROTOCOL}" = "sftp" ]; then
+            LFTP_URL="sftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set sftp:auto-confirm yes; set cmd:trace true"
+          else
+            LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true"
+          fi
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; cd public_html/public; mkdir -f assets; put -O . public/index.html; mirror -R --verbose --delete public/assets assets; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
 
       - name: Force upload assets with mput (fallback)
         run: |
@@ -194,12 +226,20 @@ PHP
           sudo apt-get update -y
           sudo apt-get install -y lftp
           # Subida por lotes de archivos en assets como fallback
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true; cd public_html/public/assets; mput -E -O . public/assets/*; ls -la; bye"
+          if [ "${FTP_PROTOCOL}" = "sftp" ]; then
+            LFTP_URL="sftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set sftp:auto-confirm yes; set cmd:trace true"
+          else
+            LFTP_URL="ftp://${FTP_SERVER}:${FTP_PORT}"
+            LFTP_OPTS="set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true"
+          fi
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$LFTP_URL" -e "$LFTP_OPTS; cd public_html/public/assets; mput -E -O . public/assets/*; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
 
       - name: Post-deploy health check
         run: |
