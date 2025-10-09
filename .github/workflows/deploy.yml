@@ -114,26 +114,24 @@ PHP
           set -e
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; pwd; ls; cd ${FTP_DIR}; pwd; ls; cd /home/spin2pay/public_html; pwd; ls; bye"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 1; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; pwd; ls; cd public_html; pwd; ls; cd public; pwd; ls; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_DIR: ${{ secrets.FTP_DIR }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
 
-      - name: FTP smoke test (upload marker to docroot)
+      - name: FTP smoke test (upload marker to /public)
         run: |
           set -e
           echo "FTP_OK $(date -u)" > ftp_check_marker.html
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; cd ${FTP_DIR}; put -O . ftp_check_marker.html; ls -la; cd /public; put -O . ftp_check_marker.html; ls -la; cd /home/spin2pay/public_html/public; put -O . ftp_check_marker.html; ls -la; bye"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:fail-exit no; set cmd:trace true; cd public_html/public; put -O . ftp_check_marker.html; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_DIR: ${{ secrets.FTP_DIR }}
-          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
 
       - name: Deploy via FTP
@@ -145,7 +143,7 @@ PHP
           port: ${{ secrets.FTP_PORT }}
           protocol: ${{ secrets.FTP_PROTOCOL }}
           local-dir: ./
-          server-dir: ${{ secrets.FTP_DIR }}
+          server-dir: public_html
           dangerous-clean-slate: false
           exclude: |
             **/.git/**
@@ -162,17 +160,17 @@ PHP
             **/*.cache
           timeout: 600000
 
-      - name: Upload env files explicitly (lftp)
+      - name: Upload env and config (to public_html)
         run: |
           set -e
           sudo apt-get update -y
           sudo apt-get install -y lftp
-          lftp -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; cd ${FTP_DIR}; put -O . .env; put -O . .env.production; put -O . env.php; mkdir -f config; put -O config config/config.php; ls -la; bye" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true; cd public_html; put -O . .env; put -O . .env.production; put -O . env.php; mkdir -f config; put -O config config/config.php; ls -la; bye"
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_DIR: ${{ secrets.FTP_DIR }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
 
       - name: Post-deploy health check
         run: |
