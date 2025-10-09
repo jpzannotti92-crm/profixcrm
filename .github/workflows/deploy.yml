@@ -172,6 +172,22 @@ PHP
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
 
+      - name: Upload frontend index and assets explicitly to /public
+        run: |
+          set -e
+          sudo apt-get update -y
+          sudo apt-get install -y lftp rsync
+          # Asegurar que public/index.html y assets existen localmente
+          if [ -f frontend/dist/index.html ]; then cp -f frontend/dist/index.html public/index.html; fi
+          if [ -d frontend/dist/assets ]; then rsync -av --delete frontend/dist/assets/ public/assets/; fi
+          # Subir explícitamente al docroot /public
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "${FTP_SERVER}:${FTP_PORT}" -e "set net:timeout 30; set net:max-retries 3; set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:passive-mode true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set cmd:trace true; cd public_html/public; mkdir -f assets; put -O . public/index.html; mirror -R --verbose --delete public/assets assets; ls -la; bye"
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+
       - name: Post-deploy health check
         run: |
           set -e
