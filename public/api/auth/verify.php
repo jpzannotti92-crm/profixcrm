@@ -11,6 +11,25 @@ header('Vary: Origin');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token, X-Access-Token, X-Token, X-JWT');
+// Blindaje contra errores: nunca devolver 500
+ini_set('display_errors', '0');
+set_exception_handler(function($e){
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+        http_response_code(401);
+    }
+    echo json_encode(['success'=>false,'message'=>'Verificación no disponible','code'=>'verify_exception']);
+});
+register_shutdown_function(function(){
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+            http_response_code(401);
+        }
+        echo json_encode(['success'=>false,'message'=>'Verificación no disponible','code'=>'verify_fatal']);
+    }
+});
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
