@@ -52,14 +52,32 @@ use IaTradeCRM\Models\User;
 try {
     $token = null;
     $headers = function_exists('getallheaders') ? getallheaders() : [];
-    $authHeader = $headers['Authorization'] ?? ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+    $authHeader = $headers['Authorization'] ?? '';
+    $serverAuth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $redirectAuth = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    $rawAuth = $_SERVER['Authorization'] ?? '';
     $xAuth = $headers['X-Auth-Token'] ?? ($headers['x-auth-token'] ?? '');
+    $xAccess = $headers['X-Access-Token'] ?? ($headers['x-access-token'] ?? '');
+    $xToken = $headers['X-Token'] ?? ($headers['x-token'] ?? '');
+    $xJwt = $headers['X-JWT'] ?? ($headers['x-jwt'] ?? '');
 
-    if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $m)) {
-        $token = $m[1];
-    } elseif (!empty($xAuth)) {
-        $token = $xAuth;
-    } elseif (isset($_COOKIE['auth_token'])) {
+    // Recoger candidatos desde múltiples fuentes
+    $candidates = [];
+    foreach ([$authHeader, $serverAuth, $redirectAuth, $rawAuth] as $h) {
+        if ($h) { $candidates[] = $h; }
+    }
+    foreach ([$xAuth, $xAccess, $xToken, $xJwt] as $alt) {
+        if ($alt) { $candidates[] = 'Bearer ' . $alt; }
+    }
+    
+    foreach ($candidates as $h) {
+        if (preg_match('/Bearer\s+(.*)$/i', $h, $m)) {
+            $token = $m[1];
+            break;
+        }
+    }
+
+    if (!$token && isset($_COOKIE['auth_token'])) {
         $token = $_COOKIE['auth_token'];
     }
 
