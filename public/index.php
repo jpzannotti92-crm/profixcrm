@@ -67,6 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Obtener la URI solicitada
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
+// Servir la SPA en la raíz: priorizar index.html
+if ($requestUri === '/' || $requestUri === '/index.php') {
+    $spaIndex = __DIR__ . '/index.html';
+    if (is_file($spaIndex)) {
+        header('Content-Type: text/html; charset=utf-8');
+        readfile($spaIndex);
+        exit;
+    }
+}
+
 // =====================================================
 // API ENDPOINTS - PRIMERA PRIORIDAD
 // =====================================================
