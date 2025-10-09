@@ -1,7 +1,7 @@
 # iaTrade CRM - Configuración Apache
 # Generado automáticamente el 2025-09-24 07:32:42
 
-DirectoryIndex index.php index.html
+DirectoryIndex index.html index.php
 Options -Indexes
 
 # Permitir acceso explícito a archivos estáticos
