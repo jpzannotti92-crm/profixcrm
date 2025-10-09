@@ -28,40 +28,50 @@ define('DEPLOY_DIR', PROJECT_ROOT . '/deploy');
 define('CONFIG_DIR', PROJECT_ROOT . '/config');
 define('INSTALL_LOCK_FILE', DEPLOY_DIR . '/.installed');
 
-// Enfoque sin .htaccess: servir assets del build de React directamente desde frontend/dist
-// Esto permite que el sitio funcione aun si Apache no lee .htaccess.
+// Enfoque sin .htaccess: servir assets directamente desde /public/assets (preferido)
+// con fallback a /frontend/dist/assets si existiera.
 try {
     $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     if (strpos($requestPath, '/assets/') === 0) {
         $assetRelative = substr($requestPath, strlen('/assets/'));
-        $assetFile = PROJECT_ROOT . '/frontend/dist/assets/' . $assetRelative;
-        if (is_file($assetFile)) {
-            $ext = strtolower(pathinfo($assetFile, PATHINFO_EXTENSION));
-            $mime = 'application/octet-stream';
-            if ($ext === 'css') $mime = 'text/css';
-            elseif ($ext === 'js') $mime = 'application/javascript';
-            elseif (in_array($ext, ['png','jpg','jpeg','gif','ico'])) $mime = 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext);
-            elseif ($ext === 'svg') $mime = 'image/svg+xml';
-            elseif ($ext === 'woff') $mime = 'font/woff';
-            elseif ($ext === 'woff2') $mime = 'font/woff2';
-            header('Content-Type: ' . $mime);
-            readfile($assetFile);
-            exit;
+        $candidatePaths = [
+            PROJECT_ROOT . '/public/assets/' . $assetRelative,
+            PROJECT_ROOT . '/frontend/dist/assets/' . $assetRelative,
+        ];
+        foreach ($candidatePaths as $assetFile) {
+            if (is_file($assetFile)) {
+                $ext = strtolower(pathinfo($assetFile, PATHINFO_EXTENSION));
+                $mime = 'application/octet-stream';
+                if ($ext === 'css') $mime = 'text/css';
+                elseif ($ext === 'js') $mime = 'application/javascript';
+                elseif (in_array($ext, ['png','jpg','jpeg','gif','ico'])) $mime = 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext);
+                elseif ($ext === 'svg') $mime = 'image/svg+xml';
+                elseif ($ext === 'woff') $mime = 'font/woff';
+                elseif ($ext === 'woff2') $mime = 'font/woff2';
+                header('Content-Type: ' . $mime);
+                readfile($assetFile);
+                exit;
+            }
         }
     }
 } catch (Throwable $e) {
     // No interrumpir flujo por errores de assets
 }
 
-// Servir directamente el frontend build cuando se visita la raíz
+// Servir directamente la SPA cuando se visita la raíz: preferir /public/index.html
 try {
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     if ($path === '/' || $path === '/index.php') {
-        $frontIndex = PROJECT_ROOT . '/frontend/dist/index.html';
-        if (is_file($frontIndex)) {
-            header('Content-Type: text/html; charset=utf-8');
-            readfile($frontIndex);
-            exit;
+        $frontCandidates = [
+            PROJECT_ROOT . '/public/index.html',
+            PROJECT_ROOT . '/frontend/dist/index.html',
+        ];
+        foreach ($frontCandidates as $frontIndex) {
+            if (is_file($frontIndex)) {
+                header('Content-Type: text/html; charset=utf-8');
+                readfile($frontIndex);
+                exit;
+            }
         }
         // Si no existe el build, mantener flujo normal
     }
