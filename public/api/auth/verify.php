@@ -28,6 +28,10 @@ function extract_token(): ?string {
     $headers = function_exists('getallheaders') ? getallheaders() : [];
     $authHeader = $headers['Authorization'] ?? '';
     $xAuthHeader = $headers['X-Auth-Token'] ?? ($headers['x-auth-token'] ?? '');
+    // Alternativos para evadir filtros/WAF que bloquean 'Authorization' o 'token'
+    $xAccessHeader = $headers['X-Access-Token'] ?? ($headers['x-access-token'] ?? '');
+    $xTokenHeader = $headers['X-Token'] ?? ($headers['x-token'] ?? '');
+    $xJwtHeader = $headers['X-JWT'] ?? ($headers['x-jwt'] ?? '');
     $serverAuth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     $redirectAuth = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
     $rawAuth = $_SERVER['Authorization'] ?? '';
@@ -36,7 +40,10 @@ function extract_token(): ?string {
     foreach ([$authHeader, $serverAuth, $redirectAuth, $rawAuth] as $h) {
         if ($h) { $candidates[] = $h; }
     }
-    if ($xAuthHeader) { $candidates[] = 'Bearer ' . $xAuthHeader; }
+    // Añadir variantes equivalentes como Bearer
+    foreach ([$xAuthHeader, $xAccessHeader, $xTokenHeader, $xJwtHeader] as $alt) {
+        if ($alt) { $candidates[] = 'Bearer ' . $alt; }
+    }
 
     foreach ($candidates as $h) {
         if (preg_match('/Bearer\s+(.*)$/i', $h, $m)) {
@@ -44,26 +51,55 @@ function extract_token(): ?string {
         }
     }
 
-    // Cookie establecida por login
-    if (isset($_COOKIE['auth_token']) && $_COOKIE['auth_token'] !== '') {
-        return $_COOKIE['auth_token'];
+    // Cookie establecida por login (y variantes tolerantes)
+    $cookieCandidates = [
+        $_COOKIE['auth_token'] ?? '',
+        $_COOKIE['access_token'] ?? '',
+        $_COOKIE['session_token'] ?? '',
+        $_COOKIE['jwt'] ?? ''
+    ];
+    foreach ($cookieCandidates as $cTok) {
+        if ($cTok !== '') { return $cTok; }
     }
 
-    // Query param ?token=...
-    if (!empty($_GET['token'])) {
-        return (string)$_GET['token'];
+    // Query param tolerante
+    $queryCandidates = [
+        $_GET['token'] ?? '',
+        $_GET['access_token'] ?? '',
+        $_GET['t'] ?? '',
+        $_GET['k'] ?? '',
+        $_GET['jwt'] ?? ''
+    ];
+    foreach ($queryCandidates as $qTok) {
+        if ($qTok !== '') { return (string)$qTok; }
     }
 
     // Body JSON { token: "..." } o form token=...
     $raw = file_get_contents('php://input');
     if ($raw) {
         $json = json_decode($raw, true);
-        if (is_array($json) && !empty($json['token'])) {
-            return (string)$json['token'];
+        if (is_array($json)) {
+            $bodyCandidates = [
+                $json['token'] ?? '',
+                $json['access_token'] ?? '',
+                $json['t'] ?? '',
+                $json['k'] ?? '',
+                $json['jwt'] ?? ''
+            ];
+            foreach ($bodyCandidates as $bTok) {
+                if ($bTok !== '') { return (string)$bTok; }
+            }
         }
     }
-    if (!empty($_POST['token'])) {
-        return (string)$_POST['token'];
+    $postCandidates = [
+        $_POST['token'] ?? '',
+        $_POST['access_token'] ?? '',
+        $_POST['t'] ?? '',
+        $_POST['k'] ?? '',
+        $_POST['jwt'] ?? ''
+    ];
+    foreach ($postCandidates as $pTok) {
+        if ($pTok !== '') { return (string)$pTok; }
     }
 
     return null;

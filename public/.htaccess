@@ -35,7 +35,7 @@ Options -Indexes
     Header always set Vary "Origin"
     Header always set Access-Control-Allow-Credentials "true"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Auth-Token"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Auth-Token, X-Access-Token, X-Token, X-JWT"
 </IfModule>
 
 # Configuración PHP

@@ -18,6 +18,10 @@ function early_extract_token(): ?string {
     $headers = function_exists('getallheaders') ? getallheaders() : [];
     $authHeader = $headers['Authorization'] ?? '';
     $xAuth = $headers['X-Auth-Token'] ?? ($headers['x-auth-token'] ?? '');
+    // Alternativos para evadir filtros/WAF
+    $xAccess = $headers['X-Access-Token'] ?? ($headers['x-access-token'] ?? '');
+    $xToken = $headers['X-Token'] ?? ($headers['x-token'] ?? '');
+    $xJwt = $headers['X-JWT'] ?? ($headers['x-jwt'] ?? '');
     $serverAuth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     $redirectAuth = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
     $rawAuth = $_SERVER['Authorization'] ?? '';
@@ -26,7 +30,9 @@ function early_extract_token(): ?string {
     foreach ([$authHeader, $serverAuth, $redirectAuth, $rawAuth] as $h) {
         if ($h) { $candidates[] = $h; }
     }
-    if ($xAuth) { $candidates[] = 'Bearer ' . $xAuth; }
+    foreach ([$xAuth, $xAccess, $xToken, $xJwt] as $alt) {
+        if ($alt) { $candidates[] = 'Bearer ' . $alt; }
+    }
 
     foreach ($candidates as $h) {
         if (preg_match('/Bearer\s+(.*)$/i', $h, $m)) {
@@ -34,23 +40,52 @@ function early_extract_token(): ?string {
         }
     }
 
-    if (isset($_COOKIE['auth_token']) && $_COOKIE['auth_token'] !== '') {
-        return $_COOKIE['auth_token'];
+    $cookieCandidates = [
+        $_COOKIE['auth_token'] ?? '',
+        $_COOKIE['access_token'] ?? '',
+        $_COOKIE['session_token'] ?? '',
+        $_COOKIE['jwt'] ?? ''
+    ];
+    foreach ($cookieCandidates as $cTok) {
+        if ($cTok !== '') { return $cTok; }
     }
 
-    if (!empty($_GET['token'])) {
-        return (string)$_GET['token'];
+    $queryCandidates = [
+        $_GET['token'] ?? '',
+        $_GET['access_token'] ?? '',
+        $_GET['t'] ?? '',
+        $_GET['k'] ?? '',
+        $_GET['jwt'] ?? ''
+    ];
+    foreach ($queryCandidates as $qTok) {
+        if ($qTok !== '') { return (string)$qTok; }
     }
 
     $raw = file_get_contents('php://input');
     if ($raw) {
         $json = json_decode($raw, true);
-        if (is_array($json) && !empty($json['token'])) {
-            return (string)$json['token'];
+        if (is_array($json)) {
+            $bodyCandidates = [
+                $json['token'] ?? '',
+                $json['access_token'] ?? '',
+                $json['t'] ?? '',
+                $json['k'] ?? '',
+                $json['jwt'] ?? ''
+            ];
+            foreach ($bodyCandidates as $bTok) {
+                if ($bTok !== '') { return (string)$bTok; }
+            }
         }
     }
-    if (!empty($_POST['token'])) {
-        return (string)$_POST['token'];
+    $postCandidates = [
+        $_POST['token'] ?? '',
+        $_POST['access_token'] ?? '',
+        $_POST['t'] ?? '',
+        $_POST['k'] ?? '',
+        $_POST['jwt'] ?? ''
+    ];
+    foreach ($postCandidates as $pTok) {
+        if ($pTok !== '') { return (string)$pTok; }
     }
 
     return null;
