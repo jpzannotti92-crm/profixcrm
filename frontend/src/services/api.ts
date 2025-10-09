@@ -135,7 +135,7 @@ export const authApi = {
     console.log('Verificando token')
     try {
       // Usar un timeout más largo para verificación de token
-      const response = await api.get('auth/verify.php', {
+      const response = await api.get(`auth/verify.php?token=${encodeURIComponent(token)}` , {
         headers: {
           'Authorization': `Bearer ${token}`
         },
