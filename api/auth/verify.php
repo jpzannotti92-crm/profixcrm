@@ -124,3 +124,6 @@ echo json_encode([
     'code' => 'verify_proxy_missing'
 ]);
 ?>
+    // Token pasado por rewrite desde el path /api/auth/verify/<token>
+    $envToken = $_SERVER['REDIRECT_PROXY_TOKEN'] ?? ($_SERVER['PROXY_TOKEN'] ?? null);
+    if ($envToken) { return (string)$envToken; }

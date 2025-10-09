@@ -71,6 +71,9 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^api/([a-z0-9_-]+)/?$ api/$1.php [QSA,L]
 
+# Ruta alternativa: pasar token en el path para verify
+RewriteRule ^api/auth/verify/([A-Za-z0-9=._-]+)/?$ api/auth/verify.php [QSA,L,E=PROXY_TOKEN:$1]
+
 # Fallback SPA: si no es archivo ni directorio, servir index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

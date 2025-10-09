@@ -20,6 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Extraer token ANTES de cargar dependencias para evitar 500 en solicitudes sin token
 function extract_token(): ?string {
+    // Token pasado por rewrite desde el path /api/auth/verify/<token>
+    $envToken = $_SERVER['REDIRECT_PROXY_TOKEN'] ?? ($_SERVER['PROXY_TOKEN'] ?? null);
+    if ($envToken) { return (string)$envToken; }
     // Si el proxy nos pasf un token ya extrafdo, usarlo primero
     if (isset($GLOBALS['__proxied_token']) && $GLOBALS['__proxied_token']) {
         return (string)$GLOBALS['__proxied_token'];
