@@ -200,6 +200,24 @@ switch ($method) {
                         $userPermissions = $currentUser->getPermissions();
                         // $userDesks = $currentUser->getDesks(); // Method not implemented yet
                         $userDesks = [];
+
+                        // Normalizar salida: devolver nombres como strings para frontend
+                        $roleNames = [];
+                        if (is_array($userRoles)) {
+                            foreach ($userRoles as $r) {
+                                if (is_array($r) && isset($r['name'])) { $roleNames[] = $r['name']; }
+                                elseif (is_object($r) && isset($r->name)) { $roleNames[] = $r->name; }
+                                elseif (is_string($r)) { $roleNames[] = $r; }
+                            }
+                        }
+                        $permissionNames = [];
+                        if (is_array($userPermissions)) {
+                            foreach ($userPermissions as $p) {
+                                if (is_array($p) && isset($p['name'])) { $permissionNames[] = $p['name']; }
+                                elseif (is_object($p) && isset($p->name)) { $permissionNames[] = $p->name; }
+                                elseif (is_string($p)) { $permissionNames[] = $p; }
+                            }
+                        }
                         
                         echo json_encode([
                             'success' => true,
@@ -213,8 +231,8 @@ switch ($method) {
                                     'status' => $currentUser->status,
                                     'created_at' => $currentUser->created_at
                                 ],
-                                'roles' => $userRoles,
-                                'permissions' => $userPermissions,
+                                'roles' => $roleNames,
+                                'permissions' => $permissionNames,
                                 'desks' => $userDesks,
                                 'access_level' => [
                                     'is_super_admin' => $currentUser->isSuperAdmin(),

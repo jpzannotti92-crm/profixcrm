@@ -17,21 +17,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Autoload y entorno
-require_once __DIR__ . '/../../vendor/autoload.php';
-if (file_exists(__DIR__ . '/../../.env')) {
-    $dotenv = Dotenv\Dotenv::createMutable(__DIR__ . '/../../');
-    if (method_exists($dotenv, 'overload')) { $dotenv->overload(); } else { $dotenv->load(); }
+// Delegar a endpoint público si existe (unifica comportamiento y rutas)
+$publicVerify = __DIR__ . '/../../public/api/auth/verify.php';
+if (file_exists($publicVerify)) {
+    require $publicVerify;
+    exit;
 }
 
-// Cargar dependencias del proyecto (evitar fallo de autoload con App\Models)
+// Autoload y entorno (robusto: continuar si no existe vendor)
+if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
+    require_once __DIR__ . '/../../vendor/autoload.php';
+    if (file_exists(__DIR__ . '/../../.env')) {
+        $dotenv = Dotenv\Dotenv::createMutable(__DIR__ . '/../../');
+        if (method_exists($dotenv, 'overload')) { $dotenv->overload(); } else { $dotenv->load(); }
+    }
+} else {
+    // Registrar pero no romper
+    error_log('verify.php: vendor/autoload.php no encontrado, continuando sin Composer');
+}
+
+// Cargar dependencias del proyecto directamente
 require_once __DIR__ . '/../../src/Database/Connection.php';
 require_once __DIR__ . '/../../src/Models/BaseModel.php';
 require_once __DIR__ . '/../../src/Models/User.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use App\Models\User;
+use IaTradeCRM\Models\User;
 
 // Extraer token desde múltiples fuentes
 try {
