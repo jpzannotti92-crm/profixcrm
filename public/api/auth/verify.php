@@ -10,7 +10,7 @@ if ($origin) {
 header('Vary: Origin');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -19,18 +19,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Extraer token ANTES de cargar dependencias para evitar 500 en solicitudes sin token
-$token = null;
-$headers = function_exists('getallheaders') ? getallheaders() : [];
-$authHeader = $headers['Authorization'] ?? ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
-$xAuth = $headers['X-Auth-Token'] ?? ($headers['x-auth-token'] ?? '');
+function extract_token(): ?string {
+    // Si el proxy nos pasf un token ya extrafdo, usarlo primero
+    if (isset($GLOBALS['__proxied_token']) && $GLOBALS['__proxied_token']) {
+        return (string)$GLOBALS['__proxied_token'];
+    }
+    // Encabezados en distintas variantes segfn el servidor/proxy
+    $headers = function_exists('getallheaders') ? getallheaders() : [];
+    $authHeader = $headers['Authorization'] ?? '';
+    $xAuthHeader = $headers['X-Auth-Token'] ?? ($headers['x-auth-token'] ?? '');
+    $serverAuth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $redirectAuth = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    $rawAuth = $_SERVER['Authorization'] ?? '';
 
-if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $m)) {
-    $token = $m[1];
-} elseif (!empty($xAuth)) {
-    $token = $xAuth;
-} elseif (isset($_COOKIE['auth_token'])) {
-    $token = $_COOKIE['auth_token'];
+    $candidates = [];
+    foreach ([$authHeader, $serverAuth, $redirectAuth, $rawAuth] as $h) {
+        if ($h) { $candidates[] = $h; }
+    }
+    if ($xAuthHeader) { $candidates[] = 'Bearer ' . $xAuthHeader; }
+
+    foreach ($candidates as $h) {
+        if (preg_match('/Bearer\s+(.*)$/i', $h, $m)) {
+            return $m[1];
+        }
+    }
+
+    // Cookie establecida por login
+    if (isset($_COOKIE['auth_token']) && $_COOKIE['auth_token'] !== '') {
+        return $_COOKIE['auth_token'];
+    }
+
+    // Query param ?token=...
+    if (!empty($_GET['token'])) {
+        return (string)$_GET['token'];
+    }
+
+    // Body JSON { token: "..." } o form token=...
+    $raw = file_get_contents('php://input');
+    if ($raw) {
+        $json = json_decode($raw, true);
+        if (is_array($json) && !empty($json['token'])) {
+            return (string)$json['token'];
+        }
+    }
+    if (!empty($_POST['token'])) {
+        return (string)$_POST['token'];
+    }
+
+    return null;
 }
+
+$token = extract_token();
 
 if (!$token) {
     http_response_code(401);

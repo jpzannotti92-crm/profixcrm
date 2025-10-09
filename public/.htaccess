@@ -35,7 +35,7 @@ Options -Indexes
     Header always set Vary "Origin"
     Header always set Access-Control-Allow-Credentials "true"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Auth-Token"
 </IfModule>
 
 # Configuración PHP
@@ -47,6 +47,11 @@ Options -Indexes
 </IfModule>
 
 RewriteEngine On
+
+# Preservar cabeceras Authorization hacia PHP (evita que el host las filtre)
+RewriteCond %{HTTP:Authorization} . [NC]
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
 # Capturar Origin en variable de entorno para usar en headers
 RewriteCond %{HTTP:Origin} ^https?://.+$ [NC]
