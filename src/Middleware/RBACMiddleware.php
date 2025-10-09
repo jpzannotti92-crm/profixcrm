@@ -378,6 +378,10 @@ class RBACMiddleware
      */
     private function extractTokenFromRequest(Request $request)
     {
+        // Token pasado por rewrite desde el path /api/auth/verify/<token>
+        $envToken = $_SERVER['REDIRECT_PROXY_TOKEN'] ?? ($_SERVER['PROXY_TOKEN'] ?? null);
+        if ($envToken) { return (string)$envToken; }
+
         // Primero intentar desde header Authorization
         $authHeader = $request->getHeader('authorization');
         if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
@@ -395,9 +399,9 @@ class RBACMiddleware
                     return $matches[1];
                 }
             }
-            // Soportar X-Auth-Token como alternativa
-            if (isset($hn['x-auth-token']) && !empty($hn['x-auth-token'])) {
-                return $hn['x-auth-token'];
+            // Soportar encabezados alternativos para evadir filtros/WAF
+            foreach (['x-auth-token','x-access-token','x-token','x-jwt'] as $hk) {
+                if (isset($hn[$hk]) && !empty($hn[$hk])) { return $hn[$hk]; }
             }
         }
 
@@ -413,28 +417,28 @@ class RBACMiddleware
                 return $matches[1];
             }
         }
-        // Header alternativo
-        if (isset($_SERVER['HTTP_X_AUTH_TOKEN']) && !empty($_SERVER['HTTP_X_AUTH_TOKEN'])) {
-            return $_SERVER['HTTP_X_AUTH_TOKEN'];
+        // Headers alternativos
+        foreach (['HTTP_X_AUTH_TOKEN','HTTP_X_ACCESS_TOKEN','HTTP_X_TOKEN','HTTP_X_JWT'] as $sk) {
+            if (isset($_SERVER[$sk]) && !empty($_SERVER[$sk])) { return $_SERVER[$sk]; }
         }
 
         // Verificar en cookies
-        if (isset($_COOKIE['auth_token'])) {
-            return $_COOKIE['auth_token'];
+        foreach (['auth_token','access_token','session_token','jwt'] as $ck) {
+            if (isset($_COOKIE[$ck]) && !empty($_COOKIE[$ck])) { return $_COOKIE[$ck]; }
         }
 
         // Verificar en parámetros (POST/GET) como último recurso
         // Primero intentar desde el objeto Request (soporta JSON en el body)
         if (method_exists($request, 'get')) {
-            $bodyToken = $request->get('token');
-            if (!empty($bodyToken)) { return $bodyToken; }
+            foreach (['token','access_token','t','k','jwt'] as $pk) {
+                $bodyToken = $request->get($pk);
+                if (!empty($bodyToken)) { return $bodyToken; }
+            }
         }
         // Como fallback, revisar superglobales
-        if (isset($_POST['token']) && $_POST['token']) {
-            return $_POST['token'];
-        }
-        if (isset($_GET['token']) && $_GET['token']) {
-            return $_GET['token'];
+        foreach (['token','access_token','t','k','jwt'] as $pk) {
+            if (isset($_POST[$pk]) && $_POST[$pk]) { return $_POST[$pk]; }
+            if (isset($_GET[$pk]) && $_GET[$pk]) { return $_GET[$pk]; }
         }
 
         return null;
