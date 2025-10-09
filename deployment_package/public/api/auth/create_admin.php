@@ -17,32 +17,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Cargar autoload y entorno
+// Cargar entorno sin dependencias de Composer
 $root = dirname(__DIR__, 3); // .../public/api/auth -> raíz del proyecto
 
-// Composer autoload (robusto)
-$autoloadPaths = [
-    $root . '/vendor/autoload.php',
-    $root . '/deploy/vendor/autoload.php',
-];
-foreach ($autoloadPaths as $ap) {
-    if (file_exists($ap)) { require_once $ap; break; }
-}
-
-// Dotenv
-try {
-    if (class_exists('Dotenv\Dotenv')) {
-        $dotenv = Dotenv\Dotenv::createImmutable($root);
-        $dotenv->safeLoad();
-        // Intentar .env.production si existe
-        if (file_exists($root . '/.env.production')) {
-            $dotenvProd = Dotenv\Dotenv::createImmutable($root, '.env.production');
-            $dotenvProd->safeLoad();
+// Parseo manual de .env y .env.production para evitar autoload roto
+$parseEnv = function($file) {
+    if (!file_exists($file)) return;
+    $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') continue;
+        $parts = explode('=', $line, 2);
+        if (count($parts) === 2) {
+            $key = trim($parts[0]);
+            $val = trim($parts[1]);
+            // Quitar comillas envolventes
+            if ((str_starts_with($val, '"') && str_ends_with($val, '"')) || (str_starts_with($val, '\'') && str_ends_with($val, '\''))) {
+                $val = substr($val, 1, -1);
+            }
+            putenv("{$key}={$val}");
+            $_ENV[$key] = $val;
         }
     }
-} catch (Throwable $e) {
-    // Continuar sin bloquear
-}
+};
+$parseEnv($root . '/.env');
+$parseEnv($root . '/.env.production');
 
 // Helpers de compatibilidad
 function envc($key, $default = null) {
@@ -63,29 +62,38 @@ function readAdminToken($root) {
 }
 
 function getDbConnection($root) {
-    // Intentar clase Connection del proyecto
+    // Intento 1: variables de entorno (.env / .env.production)
+    $envHost = envc('DB_HOST', 'localhost');
+    $envPort = envc('DB_PORT', '3306');
+    $envName = envc('DB_DATABASE', envc('DB_NAME', 'spin2pay_profixcrm'));
+    $envUser = envc('DB_USERNAME', envc('DB_USER', 'root'));
+    $envPass = envc('DB_PASSWORD', envc('DB_PASS', ''));
+
+    $envDsn = "mysql:host={$envHost};port={$envPort};dbname={$envName};charset=utf8mb4";
     try {
-        if (!class_exists('iaTradeCRM\\Database\\Connection')) {
-            $connPath = $root . '/src/Database/Connection.php';
-            if (file_exists($connPath)) require_once $connPath;
-        }
-        if (class_exists('iaTradeCRM\\Database\\Connection')) {
-            return iaTradeCRM\Database\Connection::getInstance()->getConnection();
-        }
+        return new PDO($envDsn, $envUser, $envPass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     } catch (Throwable $e) {
-        // Continuar con PDO directo
+        // Si falla por base desconocida o credenciales, intentar fallback a config/config.php
+        $msg = (string)$e->getMessage();
+        $isUnknownDb = str_contains($msg, 'Unknown database') || str_contains($msg, '1049');
+        $configPath = $root . '/config/config.php';
+        if (!$isUnknownDb && !file_exists($configPath)) {
+            // Sin config y no es unknown db, relanzar
+            throw $e;
+        }
+        // Cargar configuración
+        $conf = [];
+        if (file_exists($configPath)) {
+            $conf = require $configPath;
+        }
+        $cfgHost = $conf['database']['host'] ?? 'localhost';
+        $cfgPort = $conf['database']['port'] ?? '3306';
+        $cfgName = $conf['database']['name'] ?? 'iatrade_crm';
+        $cfgUser = $conf['database']['username'] ?? 'root';
+        $cfgPass = $conf['database']['password'] ?? '';
+        $cfgDsn = "mysql:host={$cfgHost};port={$cfgPort};dbname={$cfgName};charset=utf8mb4";
+        return new PDO($cfgDsn, $cfgUser, $cfgPass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     }
-
-    // Fallback: PDO directo por variables de entorno/config
-    $dbHost = envc('DB_HOST', 'localhost');
-    $dbPort = envc('DB_PORT', '3306');
-    $dbName = envc('DB_DATABASE', envc('DB_NAME', 'spin2pay_profixcrm'));
-    $dbUser = envc('DB_USERNAME', envc('DB_USER', 'root'));
-    $dbPass = envc('DB_PASSWORD', envc('DB_PASS', ''));
-
-    $dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbName};charset=utf8";
-    $pdo = new PDO($dsn, $dbUser, $dbPass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    return $pdo;
 }
 
 function jsonBody() {
@@ -198,6 +206,15 @@ try {
             $rs = $pdo->query("SELECT id, name FROM roles");
             $roles = $rs ? $rs->fetchAll(PDO::FETCH_ASSOC) : [];
         }
+        // Detectar columnas disponibles en user_roles para inserción compatible
+        $urCols = [];
+        try {
+            $colsStmt = $pdo->query("SHOW COLUMNS FROM user_roles");
+            $urCols = $colsStmt ? array_map(fn($c) => $c['Field'], $colsStmt->fetchAll(PDO::FETCH_ASSOC)) : [];
+        } catch (Throwable $e) { $urCols = ['user_id','role_id']; }
+        $hasAssignedAt = in_array('assigned_at', $urCols, true);
+        $hasAssignedBy = in_array('assigned_by', $urCols, true);
+
         foreach ($roles as $r) {
             $rid = (int)$r['id'];
             $rname = (string)$r['name'];
@@ -205,8 +222,14 @@ try {
             $st->execute([$userId, $rid]);
             $hasRole = ((int)$st->fetchColumn()) > 0;
             if (!$hasRole) {
-                $insUR = $pdo->prepare("INSERT INTO user_roles (user_id, role_id, assigned_at) VALUES (?, ?, NOW())");
-                $insUR->execute([$userId, $rid]);
+                $fields = ['user_id','role_id'];
+                $place = ['?','?'];
+                $vals = [$userId, $rid];
+                if ($hasAssignedBy) { $fields[] = 'assigned_by'; $place[] = '?'; $vals[] = null; }
+                if ($hasAssignedAt) { $fields[] = 'assigned_at'; $place[] = 'NOW()'; }
+                $sql = "INSERT INTO user_roles (".implode(',', $fields).") VALUES (".implode(',', $place).")";
+                $insUR = $pdo->prepare($sql);
+                $insUR->execute($vals);
             }
             $assignedRoleNames[] = $rname;
         }
@@ -226,13 +249,22 @@ try {
             $roleId = (int)$roleRow['id'];
             $roleName = (string)$roleRow['name'];
         }
-        // Asignar rol si no está
+        // Asignar rol si no está (compatible con distintos esquemas)
         $st = $pdo->prepare("SELECT COUNT(*) FROM user_roles WHERE user_id = ? AND role_id = ?");
         $st->execute([$userId, $roleId]);
         $hasRole = ((int)$st->fetchColumn()) > 0;
         if (!$hasRole) {
-            $insUR = $pdo->prepare("INSERT INTO user_roles (user_id, role_id, assigned_at) VALUES (?, ?, NOW())");
-            $insUR->execute([$userId, $roleId]);
+            $urCols = [];
+            try { $colsStmt = $pdo->query("SHOW COLUMNS FROM user_roles"); $urCols = $colsStmt ? array_map(fn($c) => $c['Field'], $colsStmt->fetchAll(PDO::FETCH_ASSOC)) : []; } catch (Throwable $e) { $urCols = ['user_id','role_id']; }
+            $hasAssignedAt = in_array('assigned_at', $urCols, true);
+            $hasAssignedBy = in_array('assigned_by', $urCols, true);
+            $fields = ['user_id','role_id'];
+            $place = ['?','?'];
+            $vals = [$userId, $roleId];
+            if ($hasAssignedBy) { $fields[] = 'assigned_by'; $place[] = '?'; $vals[] = null; }
+            if ($hasAssignedAt) { $fields[] = 'assigned_at'; $place[] = 'NOW()'; }
+            $sql = "INSERT INTO user_roles (".implode(',', $fields).") VALUES (".implode(',', $place).")";
+            $pdo->prepare($sql)->execute($vals);
         }
         $assignedRoleNames[] = $roleName;
     }

@@ -28,40 +28,50 @@ define('DEPLOY_DIR', PROJECT_ROOT . '/deploy');
 define('CONFIG_DIR', PROJECT_ROOT . '/config');
 define('INSTALL_LOCK_FILE', DEPLOY_DIR . '/.installed');
 
-// Enfoque sin .htaccess: servir assets del build de React directamente desde frontend/dist
-// Esto permite que el sitio funcione aun si Apache no lee .htaccess.
+// Enfoque sin .htaccess: servir assets directamente desde /public/assets (preferido)
+// con fallback a /frontend/dist/assets si existiera.
 try {
     $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     if (strpos($requestPath, '/assets/') === 0) {
         $assetRelative = substr($requestPath, strlen('/assets/'));
-        $assetFile = PROJECT_ROOT . '/frontend/dist/assets/' . $assetRelative;
-        if (is_file($assetFile)) {
-            $ext = strtolower(pathinfo($assetFile, PATHINFO_EXTENSION));
-            $mime = 'application/octet-stream';
-            if ($ext === 'css') $mime = 'text/css';
-            elseif ($ext === 'js') $mime = 'application/javascript';
-            elseif (in_array($ext, ['png','jpg','jpeg','gif','ico'])) $mime = 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext);
-            elseif ($ext === 'svg') $mime = 'image/svg+xml';
-            elseif ($ext === 'woff') $mime = 'font/woff';
-            elseif ($ext === 'woff2') $mime = 'font/woff2';
-            header('Content-Type: ' . $mime);
-            readfile($assetFile);
-            exit;
+        $candidatePaths = [
+            PROJECT_ROOT . '/public/assets/' . $assetRelative,
+            PROJECT_ROOT . '/frontend/dist/assets/' . $assetRelative,
+        ];
+        foreach ($candidatePaths as $assetFile) {
+            if (is_file($assetFile)) {
+                $ext = strtolower(pathinfo($assetFile, PATHINFO_EXTENSION));
+                $mime = 'application/octet-stream';
+                if ($ext === 'css') $mime = 'text/css';
+                elseif ($ext === 'js') $mime = 'application/javascript';
+                elseif (in_array($ext, ['png','jpg','jpeg','gif','ico'])) $mime = 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext);
+                elseif ($ext === 'svg') $mime = 'image/svg+xml';
+                elseif ($ext === 'woff') $mime = 'font/woff';
+                elseif ($ext === 'woff2') $mime = 'font/woff2';
+                header('Content-Type: ' . $mime);
+                readfile($assetFile);
+                exit;
+            }
         }
     }
 } catch (Throwable $e) {
     // No interrumpir flujo por errores de assets
 }
 
-// Servir directamente el frontend build cuando se visita la raíz
+// Servir directamente la SPA cuando se visita la raíz: preferir /public/index.html
 try {
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     if ($path === '/' || $path === '/index.php') {
-        $frontIndex = PROJECT_ROOT . '/frontend/dist/index.html';
-        if (is_file($frontIndex)) {
-            header('Content-Type: text/html; charset=utf-8');
-            readfile($frontIndex);
-            exit;
+        $frontCandidates = [
+            PROJECT_ROOT . '/public/index.html',
+            PROJECT_ROOT . '/frontend/dist/index.html',
+        ];
+        foreach ($frontCandidates as $frontIndex) {
+            if (is_file($frontIndex)) {
+                header('Content-Type: text/html; charset=utf-8');
+                readfile($frontIndex);
+                exit;
+            }
         }
         // Si no existe el build, mantener flujo normal
     }
@@ -151,6 +161,111 @@ if (isSystemConfigured() && file_exists(__DIR__ . '/deploy') && !file_exists(__D
 // Lógica principal de redirección
 if (isNewInstallation()) {
     // Nueva instalación - intentar asistente de deploy si existe, con fallbacks
+
+    // Auto-despliegue: si hay un ZIP de paquete en raíz o en deploy/releases, extraer y arrancar instalador
+    try {
+        // Buscar ZIP más reciente válido
+        $findLatestZip = function(array $dirs) {
+            $candidates = [];
+            foreach ($dirs as $dir) {
+                if (!is_dir($dir)) continue;
+                $files = glob($dir . '/*.zip');
+                foreach ($files as $f) {
+                    // Priorizar paquetes que contengan "profixcrm" y "v8"
+                    $name = strtolower(basename($f));
+                    $score = 0;
+                    if (strpos($name, 'profixcrm') !== false) $score += 2;
+                    if (strpos($name, 'v8') !== false) $score += 2;
+                    if (strpos($name, 'update') !== false || strpos($name, 'installer') !== false) $score += 1;
+                    $candidates[] = [
+                        'path' => $f,
+                        'mtime' => filemtime($f),
+                        'score' => $score
+                    ];
+                }
+            }
+            if (empty($candidates)) return null;
+            // Ordenar por score y fecha
+            usort($candidates, function($a, $b) {
+                if ($a['score'] === $b['score']) return $b['mtime'] <=> $a['mtime'];
+                return $b['score'] <=> $a['score'];
+            });
+            return $candidates[0]['path'];
+        };
+
+        $zipPath = $findLatestZip([PROJECT_ROOT, DEPLOY_DIR . '/releases']);
+        if ($zipPath && class_exists('ZipArchive')) {
+            // Registrar intento de auto-despliegue
+            $autoLog = PROJECT_ROOT . '/logs/production/autodeploy.log';
+            @mkdir(dirname($autoLog), 0755, true);
+            @file_put_contents($autoLog, date('Y-m-d H:i:s') . " - Detectado ZIP: " . basename($zipPath) . "\n", FILE_APPEND);
+
+            $zip = new ZipArchive();
+            if ($zip->open($zipPath) === true) {
+                // Extraer en directorio temporal primero
+                $tempDir = PROJECT_ROOT . '/temp/v8/autodeploy_' . date('Ymd_His');
+                @mkdir($tempDir, 0755, true);
+                $zip->extractTo($tempDir);
+                $zip->close();
+
+                // Detectar raíz del paquete (si viene dentro de una carpeta única)
+                $entries = array_values(array_filter(scandir($tempDir), function($e) {
+                    return $e !== '.' && $e !== '..';
+                }));
+                $packageRoot = $tempDir;
+                if (count($entries) === 1 && is_dir($tempDir . '/' . $entries[0])) {
+                    $packageRoot = $tempDir . '/' . $entries[0];
+                }
+
+                // Si el paquete parece completo (tiene api/src/public/vendor), copiar a raíz
+                $expectedDirs = ['api','src','public','vendor'];
+                $hasExpected = true;
+                foreach ($expectedDirs as $d) {
+                    if (!is_dir($packageRoot . '/' . $d)) { $hasExpected = false; break; }
+                }
+                if ($hasExpected) {
+                    // Copiado recursivo seguro (sin sobrescribir .htaccess si ya existe)
+                    $copyRecursive = function($src, $dst) use (&$copyRecursive) {
+                        if (is_dir($src)) {
+                            @mkdir($dst, 0755, true);
+                            $items = scandir($src);
+                            foreach ($items as $item) {
+                                if ($item === '.' || $item === '..') continue;
+                                $s = $src . '/' . $item;
+                                $d = $dst . '/' . $item;
+                                if (is_dir($s)) {
+                                    $copyRecursive($s, $d);
+                                } else {
+                                    // No sobrescribir .htaccess existente en raíz
+                                    if (basename($d) === '.htaccess' && file_exists($d)) continue;
+                                    @copy($s, $d);
+                                }
+                            }
+                        } else {
+                            @copy($src, $dst);
+                        }
+                    };
+                    $copyRecursive($packageRoot, PROJECT_ROOT);
+                    @file_put_contents($autoLog, date('Y-m-d H:i:s') . " - Paquete copiado a raíz desde $packageRoot\n", FILE_APPEND);
+                } else {
+                    @file_put_contents($autoLog, date('Y-m-d H:i:s') . " - Paquete extraído en $tempDir (estructura no estándar)\n", FILE_APPEND);
+                }
+
+                // Redirigir al sistema de despliegue para continuar la instalación
+                if (file_exists(PROJECT_ROOT . '/deploy_system.php')) {
+                    header('Location: /deploy_system.php');
+                    exit;
+                } elseif (file_exists(PROJECT_ROOT . '/install/index.php')) {
+                    header('Location: /install/index.php');
+                    exit;
+                }
+            } else {
+                @file_put_contents($autoLog, date('Y-m-d H:i:s') . " - No se pudo abrir ZIP: $zipPath\n", FILE_APPEND);
+            }
+        }
+    } catch (Throwable $e) {
+        // Fallo silencioso del autodeploy, continuar con flujo normal
+    }
 
     // Crear .htaccess mínimo si falta para evitar 404 por rutas
     if (!file_exists(__DIR__ . '/.htaccess')) {

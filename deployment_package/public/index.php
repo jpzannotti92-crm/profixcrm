@@ -67,6 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Obtener la URI solicitada
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
+// Servir la SPA en la raíz: priorizar index.html
+if ($requestUri === '/' || $requestUri === '/index.php') {
+    $spaIndex = __DIR__ . '/index.html';
+    if (is_file($spaIndex)) {
+        header('Content-Type: text/html; charset=utf-8');
+        readfile($spaIndex);
+        exit;
+    }
+}
+
 // =====================================================
 // API ENDPOINTS - PRIMERA PRIORIDAD
 // =====================================================
@@ -81,6 +91,21 @@ if ($requestUri === '/api/health' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         echo json_encode([
             'success' => false,
             'message' => 'Health endpoint no disponible'
+        ]);
+    }
+    exit;
+}
+
+// API Health Deep
+if ($requestUri === '/api/health-deep' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Content-Type: application/json');
+    if (file_exists(__DIR__ . '/api/health-deep.php')) {
+        include __DIR__ . '/api/health-deep.php';
+    } else {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Health-deep endpoint no disponible'
         ]);
     }
     exit;

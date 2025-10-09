@@ -146,23 +146,27 @@ switch ($method) {
                         echo json_encode(['error' => 'ID de lead requerido']);
                         exit();
                     }
-                    
-                    $stmt = $db->getConnection()->prepare("
-                        SELECT lsh.*, 
-                               ds_old.name as old_state_name, ds_old.color as old_state_color,
-                               ds_new.name as new_state_name, ds_new.color as new_state_color,
-                               CONCAT(u.first_name, ' ', u.last_name) as changed_by_name
-                        FROM lead_state_history lsh
-                        LEFT JOIN desk_states ds_old ON lsh.old_state_id = ds_old.id
-                        LEFT JOIN desk_states ds_new ON lsh.new_state_id = ds_new.id
-                        LEFT JOIN users u ON lsh.changed_by = u.id
-                        WHERE lsh.lead_id = ?
-                        ORDER BY lsh.changed_at DESC
-                    ");
-                    $stmt->execute([$leadId]);
-                    $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                    
-                    echo json_encode(['success' => true, 'data' => $history]);
+                    try {
+                        $stmt = $db->getConnection()->prepare("
+                            SELECT lsh.*, 
+                                   ds_old.name as old_state_name, ds_old.color as old_state_color,
+                                   ds_new.name as new_state_name, ds_new.color as new_state_color,
+                                   CONCAT(u.first_name, ' ', u.last_name) as changed_by_name
+                            FROM lead_state_history lsh
+                            LEFT JOIN desk_states ds_old ON lsh.old_state_id = ds_old.id
+                            LEFT JOIN desk_states ds_new ON lsh.new_state_id = ds_new.id
+                            LEFT JOIN users u ON lsh.changed_by = u.id
+                            WHERE lsh.lead_id = ?
+                            ORDER BY lsh.changed_at DESC
+                        ");
+                        $stmt->execute([$leadId]);
+                        $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        echo json_encode(['success' => true, 'data' => $history]);
+                    } catch (PDOException $e) {
+                        // Si la tabla no existe, devolver historial vacío en producción
+                        error_log('lead_state_history no disponible: ' . $e->getMessage());
+                        echo json_encode(['success' => true, 'data' => []]);
+                    }
                     exit();
             }
         }

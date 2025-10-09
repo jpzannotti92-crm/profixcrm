@@ -1,8 +1,16 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
 
 // Configuración de la instancia de Axios
+const resolvedBaseURL = (() => {
+  const envBase = import.meta.env.VITE_API_URL
+  if (envBase && typeof envBase === 'string') return envBase
+  // Si estamos en localhost y no hay VITE_API_URL, apuntar a producción
+  if (window.location.hostname === 'localhost') return 'https://spin2pay.com/api'
+  return '/api'
+})()
+
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: resolvedBaseURL,
   timeout: 30000, // Aumentar timeout a 30 segundos
   withCredentials: true, // Enviar cookies (auth_token) en peticiones al backend
   headers: {

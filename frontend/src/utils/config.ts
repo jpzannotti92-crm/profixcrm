@@ -44,8 +44,16 @@ class ConfigManager {
   private async fetchConfigWithRetry(): Promise<AppConfig> {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
-        // Usar ruta relativa para aprovechar el proxy de Vite
-        const response = await fetch('/api/config', {
+        // Construir URL del endpoint de config. Si hay VITE_API_URL, usar producción.
+        const envApiBase = (import.meta as any).env?.VITE_API_URL as string | undefined
+        const isLocalhost = window.location.hostname === 'localhost'
+        const apiBase = envApiBase || '/api'
+        const normalizedBase = typeof apiBase === 'string' ? apiBase.replace(/\/$/, '') : '/api'
+        // Si estamos en localhost y no hay VITE_API_URL, usar producción directa
+        const computedBase = (!envApiBase && isLocalhost) ? 'https://spin2pay.com/api' : normalizedBase
+        const configUrl = `${computedBase}/config`
+
+        const response = await fetch(configUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -117,7 +125,10 @@ class ConfigManager {
   }
 
   private getEmergencyConfig(): AppConfig {
-    const baseUrl = window.location.origin;
+    // Si tenemos VITE_API_URL, usarlo para apuntar a producción.
+    const viteApi = (import.meta as any).env?.VITE_API_URL as string | undefined;
+    const baseUrl = (import.meta as any).env?.VITE_BASE_URL || window.location.origin;
+    const apiUrl = viteApi || `${baseUrl}/api`;
     
     return {
       app: {
@@ -126,8 +137,8 @@ class ConfigManager {
         environment: 'production'
       },
       urls: {
-        base: baseUrl,
-        api: `${baseUrl}/api`,
+        base: typeof baseUrl === 'string' ? baseUrl : window.location.origin,
+        api: apiUrl,
         frontend: baseUrl,
         login: `${baseUrl}/auth/login`,
         dashboard: `${baseUrl}/dashboard`

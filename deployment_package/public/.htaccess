@@ -1,7 +1,7 @@
 # iaTrade CRM - Configuración Apache
 # Generado automáticamente el 2025-09-24 07:32:42
 
-DirectoryIndex index.php index.html
+DirectoryIndex index.html index.php
 Options -Indexes
 
 # Permitir acceso explícito a archivos estáticos
@@ -37,8 +37,22 @@ Options -Indexes
     php_value max_execution_time 300
 </IfModule>
 
-# Reescritura deshabilitada para evitar conflictos.
-# El routing lo manejan index.php y archivos puente en /api.
+RewriteEngine On
+
+# Forzar raíz a servir la SPA
+RewriteRule ^$ index.html [L]
+
+# Reescritura de rutas API amigables a archivos PHP dentro de /public/api
+RewriteRule ^api/health-deep/?$ api/health.php [QSA,L]
+RewriteCond %{REQUEST_URI} ^/api/ [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/([a-z0-9_-]+)/?$ api/$1.php [QSA,L]
+
+# Fallback SPA: si no es archivo ni directorio, servir index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
 
 # Compresión
 <IfModule mod_deflate.c>

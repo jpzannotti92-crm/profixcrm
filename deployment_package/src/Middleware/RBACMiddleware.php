@@ -300,7 +300,7 @@ class RBACMiddleware
             return false;
         }
 
-        $db = \IaTradeCRM\Database\Connection::getInstance();
+        $db = \iaTradeCRM\Database\Connection::getInstance();
         $stmt = $db->prepare("SELECT desk_id FROM leads WHERE id = ?");
         $stmt->execute([$leadId]);
         $lead = $stmt->fetch();
@@ -313,7 +313,7 @@ class RBACMiddleware
      */
     private function isLeadAssignedToUser($user, $leadId)
     {
-        $db = \IaTradeCRM\Database\Connection::getInstance();
+        $db = \iaTradeCRM\Database\Connection::getInstance();
         $stmt = $db->prepare("SELECT assigned_to FROM leads WHERE id = ?");
         $stmt->execute([$leadId]);
         $lead = $stmt->fetch();

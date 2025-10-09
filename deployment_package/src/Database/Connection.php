@@ -13,6 +13,14 @@ class Connection
     private function __construct()
     {
         try {
+            // Cargar constantes del sistema (DB_*), si están disponibles
+            $constantsFile = __DIR__ . '/../../config/constants.php';
+            if (file_exists($constantsFile)) { @include_once $constantsFile; }
+
+            // Fallback adicional: incluir env.php si existe (evita depender de dotfiles en producción)
+            $envPhp = __DIR__ . '/../../env.php';
+            if (file_exists($envPhp)) { @include_once $envPhp; }
+
             // Asegurar carga de .env en contextos CLI o entornos sin Composer
             if ((!isset($_ENV['DB_DATABASE']) && !isset($_ENV['DB_NAME'])) || !isset($_ENV['DB_HOST'])) {
                 $envFile = __DIR__ . '/../../.env';
@@ -30,14 +38,32 @@ class Connection
                     }
                 }
             }
-            $host = $_ENV['DB_HOST'] ?? 'localhost';
-            $port = $_ENV['DB_PORT'] ?? '3306';
+            // Si todavía faltan variables, leer config/config.php directamente
+            if ((!isset($_ENV['DB_DATABASE']) && !defined('DB_NAME')) || (!isset($_ENV['DB_HOST']) && !defined('DB_HOST'))) {
+                $configFile = __DIR__ . '/../../config/config.php';
+                if (file_exists($configFile)) {
+                    $cfg = @include $configFile; // devuelve array
+                    if (is_array($cfg) && isset($cfg['database'])) {
+                        $_ENV['DB_HOST'] = $_ENV['DB_HOST'] ?? ($cfg['database']['host'] ?? null);
+                        $_ENV['DB_PORT'] = $_ENV['DB_PORT'] ?? ($cfg['database']['port'] ?? null);
+                        $_ENV['DB_DATABASE'] = $_ENV['DB_DATABASE'] ?? ($cfg['database']['name'] ?? null);
+                        $_ENV['DB_USERNAME'] = $_ENV['DB_USERNAME'] ?? ($cfg['database']['username'] ?? null);
+                        $_ENV['DB_PASSWORD'] = $_ENV['DB_PASSWORD'] ?? ($cfg['database']['password'] ?? null);
+                        foreach (['DB_HOST','DB_PORT','DB_DATABASE','DB_USERNAME','DB_PASSWORD'] as $kk) {
+                            if (isset($_ENV[$kk]) && $_ENV[$kk] !== null) { @putenv($kk.'='.$_ENV[$kk]); }
+                        }
+                    }
+                }
+            }
+
+            $host = (defined('DB_HOST') ? DB_HOST : ($_ENV['DB_HOST'] ?? 'localhost'));
+            $port = (defined('DB_PORT') ? DB_PORT : ($_ENV['DB_PORT'] ?? '3306'));
             // Admitir tanto DB_DATABASE como DB_NAME para compatibilidad con distintos .env
             // Fallback actualizado: spin2pay_profixcrm
-            $dbname = $_ENV['DB_DATABASE'] ?? ($_ENV['DB_NAME'] ?? 'spin2pay_profixcrm');
-            // Admitir alias DB_USER
-            $username = $_ENV['DB_USERNAME'] ?? ($_ENV['DB_USER'] ?? 'root');
-            $password = $_ENV['DB_PASSWORD'] ?? '';
+            $dbname = (defined('DB_NAME') ? DB_NAME : ($_ENV['DB_DATABASE'] ?? ($_ENV['DB_NAME'] ?? 'spin2pay_profixcrm')));
+            // Admitir alias DB_USER y constantes
+            $username = (defined('DB_USER') ? DB_USER : ($_ENV['DB_USERNAME'] ?? ($_ENV['DB_USER'] ?? 'root')));
+            $password = (defined('DB_PASS') ? DB_PASS : ($_ENV['DB_PASSWORD'] ?? ''));
             $charset = $_ENV['DB_CHARSET'] ?? 'utf8mb4';
 
             $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset={$charset}";

@@ -2,7 +2,7 @@
 
 namespace IaTradeCRM\Models;
 
-use IaTradeCRM\Database\Connection;
+use iaTradeCRM\Database\Connection;
 use PDO;
 
 abstract class BaseModel

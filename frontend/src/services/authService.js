@@ -269,8 +269,9 @@ class AuthService {
 
     // Métodos de verificación local (más rápidos)
     hasPermissionLocal(permission) {
-        // Super admin siempre tiene acceso a todo
-        if (this.isSuperAdmin()) {
+        // Super admin y admin siempre tienen acceso completo en frontend
+        // (el backend ya trata a admin como acceso total en varios endpoints)
+        if (this.isSuperAdmin() || this.isAdmin()) {
             return true;
         }
         
@@ -325,7 +326,10 @@ class AuthService {
             'create_reports': 'reports.create',
             // System
             'manage_permissions': 'user_permissions.edit',
-            'view_audit': 'system.audit'
+            'view_audit': 'system.audit',
+            // States
+            'manage_states': 'manage_states',
+            'view_states': 'states.view'
         };
         
         // Obtener el permiso mapeado

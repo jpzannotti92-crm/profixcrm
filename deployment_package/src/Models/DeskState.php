@@ -4,6 +4,7 @@ namespace IaTradeCRM\Models;
 
 use PDO;
 use Exception;
+use iaTradeCRM\Database\Connection;
 
 class DeskState
 {
@@ -12,6 +13,25 @@ class DeskState
     public function __construct($pdo)
     {
         $this->pdo = $pdo;
+    }
+
+    /**
+     * Obtener el ID de un estado por su nombre dentro de un desk
+     * Usado por endpoints para resolver transiciones de estado
+     */
+    public static function getStateIdByName($name, $deskId)
+    {
+        try {
+            $db = \iaTradeCRM\Database\Connection::getInstance()->getConnection();
+            $sql = "SELECT id FROM desk_states WHERE desk_id = ? AND name = ? LIMIT 1";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$deskId, $name]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? (int)$row['id'] : null;
+        } catch (\Throwable $e) {
+            error_log("DeskState::getStateIdByName error: " . $e->getMessage());
+            return null;
+        }
     }
     
     /**
